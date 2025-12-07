@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.aaronjosh.real_estate_app.dto.property.PropertyResDto;
 import com.aaronjosh.real_estate_app.models.PropertyEntity;
@@ -22,8 +23,14 @@ public class PropertyMapper {
         List<String> images = new ArrayList<>();
 
         // Generate url for each image
+
         property.getImage().forEach(image -> {
-            images.add("http://209.97.162.46:8080/api/image/" + image.getId());
+            String imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+                    .path("/api/image/")
+                    .path(image.getId().toString())
+                    .toUriString();
+
+            images.add(imageUrl);
         });
 
         // Create a new dto instance
