@@ -23,7 +23,7 @@ public class PropertyMapper {
 
         // Generate url for each image
         property.getImage().forEach(image -> {
-            images.add("http://209.97.162.46/api/image/" + image.getId());
+            images.add("http://209.97.162.46:80/api/image/" + image.getId());
         });
 
         // Create a new dto instance
