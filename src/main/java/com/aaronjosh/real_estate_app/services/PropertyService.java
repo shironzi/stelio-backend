@@ -15,6 +15,7 @@ import com.aaronjosh.real_estate_app.dto.property.PropertyDto;
 import com.aaronjosh.real_estate_app.dto.property.PropertyResDto;
 import com.aaronjosh.real_estate_app.dto.property.UpdatePropertyDto;
 import com.aaronjosh.real_estate_app.models.PropertyImageEntity;
+import com.aaronjosh.real_estate_app.models.PropertyStats;
 import com.aaronjosh.real_estate_app.models.PropertyEntity;
 import com.aaronjosh.real_estate_app.models.UserEntity;
 import com.aaronjosh.real_estate_app.models.PropertyEntity.PropertyStatus;
@@ -106,6 +107,10 @@ public class PropertyService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         property.setHost(userRef);
+
+        PropertyStats stats = new PropertyStats();
+        stats.setProperty(property);
+        property.setStats(stats);
 
         // saving the property
         return propertyRepo.save(property);

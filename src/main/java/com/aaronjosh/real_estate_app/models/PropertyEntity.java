@@ -95,6 +95,9 @@ public class PropertyEntity {
     @OneToMany(mappedBy = "property", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<BookingEntity> bookings = new ArrayList<>();
 
+    @OneToOne(mappedBy = "property", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private PropertyStats stats;
+
     public PropertyEntity() {
     }
 
