@@ -2,6 +2,7 @@ package com.aaronjosh.real_estate_app.services;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.Objects;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -48,7 +49,7 @@ public class BookingService {
     public BookingEntity getBookingById(UUID bookingId) {
         UserEntity user = userService.getUserEntity();
 
-        return bookingRepo.findById(bookingId)
+        return bookingRepo.findById(Objects.requireNonNull(bookingId))
                 .filter(booking -> booking.getUser().getId().equals(user.getId()))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Booking not found"));
     }
@@ -60,7 +61,7 @@ public class BookingService {
         UserEntity user = userService.getUserEntity();
 
         // get property
-        PropertyEntity property = propertyRepo.findById(propertyId)
+        PropertyEntity property = propertyRepo.findById(Objects.requireNonNull(propertyId))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "property not found"));
 
         // verify if there was a active request
@@ -95,7 +96,7 @@ public class BookingService {
 
     // cancel booking from renters
     public void cancelBooking(UUID bookingId) {
-        BookingEntity booking = bookingRepo.findById(bookingId)
+        BookingEntity booking = bookingRepo.findById(Objects.requireNonNull(bookingId, "bookingId must not be null"))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Booking not found."));
 
         booking.setStatus(BookingStatus.CANCELLED);
@@ -103,9 +104,8 @@ public class BookingService {
         bookingRepo.save(booking);
     }
 
-    @Transactional
     public void updateBookingStatus(UUID bookingId, BookingStatus status) {
-        BookingEntity booking = bookingRepo.findById(bookingId)
+        BookingEntity booking = bookingRepo.findById(Objects.requireNonNull(bookingId, "bookingId must not be null"))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Booking not found."));
 
         UserEntity user = userService.getUserEntity();

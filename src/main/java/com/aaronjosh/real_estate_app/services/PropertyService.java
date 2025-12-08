@@ -1,6 +1,7 @@
 package com.aaronjosh.real_estate_app.services;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +18,6 @@ import com.aaronjosh.real_estate_app.models.PropertyImageEntity;
 import com.aaronjosh.real_estate_app.models.PropertyEntity;
 import com.aaronjosh.real_estate_app.models.UserEntity;
 import com.aaronjosh.real_estate_app.models.PropertyEntity.PropertyStatus;
-import com.aaronjosh.real_estate_app.models.UserEntity.Role;
 import com.aaronjosh.real_estate_app.repositories.PropertyRepository;
 import com.aaronjosh.real_estate_app.repositories.UserRepository;
 import com.aaronjosh.real_estate_app.util.PropertyMapper;
@@ -62,7 +62,7 @@ public class PropertyService {
     // get property by id
     @Transactional(readOnly = true)
     public PropertyResDto getPropertyById(UUID propertyId) {
-        PropertyEntity property = propertyRepo.findById(propertyId)
+        PropertyEntity property = propertyRepo.findById(Objects.requireNonNull(propertyId))
                 .orElseThrow(() -> new RuntimeException("Property not found"));
 
         return propertyMapperWithSchedules.toDto(property);
@@ -102,7 +102,7 @@ public class PropertyService {
             }
         }
 
-        UserEntity userRef = userRepo.findById(jwtUser.getId())
+        UserEntity userRef = userRepo.findById(Objects.requireNonNull(jwtUser.getId()))
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         property.setHost(userRef);
@@ -114,7 +114,7 @@ public class PropertyService {
     public PropertyEntity editProperty(UpdatePropertyDto propertyDto, UUID propertyId) {
         UserEntity user = userService.getUserEntity();
 
-        PropertyEntity property = propertyRepo.findById(propertyId)
+        PropertyEntity property = propertyRepo.findById(Objects.requireNonNull(propertyId))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Property not found"));
 
@@ -141,7 +141,7 @@ public class PropertyService {
 
     @Transactional(rollbackFor = Exception.class)
     public void deleteProperty(UUID propertyId) {
-        PropertyEntity property = propertyRepo.findById(propertyId)
+        PropertyEntity property = propertyRepo.findById(Objects.requireNonNull(propertyId))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Property not found"));
 

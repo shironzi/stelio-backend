@@ -1,5 +1,6 @@
 package com.aaronjosh.real_estate_app.services;
 
+import java.util.Objects;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +16,7 @@ public class FileService {
     private PropertyImageRepository propertyImageRepo;
 
     public PropertyImageEntity getImageById(UUID id) {
-        return propertyImageRepo.findById(id).orElseThrow(() -> new RuntimeException("Image not found"));
+        return propertyImageRepo.findById(Objects.requireNonNull(id))
+                .orElseThrow(() -> new RuntimeException("Image not found"));
     }
 }

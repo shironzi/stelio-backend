@@ -2,6 +2,7 @@ package com.aaronjosh.real_estate_app.util;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +28,7 @@ public class PropertyMapper {
         property.getImage().forEach(image -> {
             String imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
                     .path("/api/image/")
-                    .path(image.getId().toString())
+                    .path(Objects.requireNonNull(image.getId().toString()))
                     .toUriString();
 
             images.add(imageUrl);

@@ -1,5 +1,6 @@
 package com.aaronjosh.real_estate_app.services;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -27,14 +28,14 @@ public class FavoriteService {
 
     // Checks if a favorite with the given UUID exists
     public boolean getFavorite(UUID id) {
-        return favoriteRepo.findById(id).isPresent();
+        return favoriteRepo.findById(Objects.requireNonNull(id)).isPresent();
     }
 
     // Adds a favorite for the current user and the specified property.
     public void addFavorite(UUID propertyId) {
         UserEntity user = userService.getUserEntity();
 
-        PropertyEntity property = propertyRepo.findById(propertyId)
+        PropertyEntity property = propertyRepo.findById(Objects.requireNonNull(propertyId))
                 .orElseThrow(() -> new RuntimeException("Property not found"));
 
         // checks if the favorite is alreadt exists.
@@ -56,6 +57,6 @@ public class FavoriteService {
             return;
 
         favoriteRepo.findByProperty_IdAndUser_Id(propertyId, user.getId())
-                .ifPresent(favorite -> favoriteRepo.delete(favorite));
+                .ifPresent(favorite -> favoriteRepo.delete(Objects.requireNonNull(favorite)));
     }
 }

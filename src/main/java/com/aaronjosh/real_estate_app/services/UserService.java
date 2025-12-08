@@ -1,5 +1,6 @@
 package com.aaronjosh.real_estate_app.services;
 
+import java.util.Objects;
 import java.util.UUID;
 
 import javax.management.RuntimeErrorException;
@@ -28,7 +29,8 @@ public class UserService {
 
         UUID userId = ((UserEntity) authentication.getPrincipal()).getId();
 
-        UserEntity user = userRepo.findById(userId).orElseThrow(() -> new RuntimeErrorException(null));
+        UserEntity user = userRepo.findById(Objects.requireNonNull(userId))
+                .orElseThrow(() -> new RuntimeErrorException(null));
 
         return user;
     }
