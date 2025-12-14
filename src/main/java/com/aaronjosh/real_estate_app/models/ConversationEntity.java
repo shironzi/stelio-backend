@@ -10,7 +10,9 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
@@ -28,10 +30,14 @@ public class ConversationEntity {
     private LocalDateTime updated_at;
 
     @OneToMany(mappedBy = "conversation", fetch = FetchType.LAZY, orphanRemoval = true)
-    private List<ParticipantEntity> partisipants = new ArrayList<>();;
+    private List<ParticipantEntity> participants = new ArrayList<>();
 
     @OneToMany(mappedBy = "conversation", fetch = FetchType.LAZY, orphanRemoval = true)
-    private List<MessageEntity> messages = new ArrayList<>();;
+    private List<MessageEntity> messages = new ArrayList<>();
+
+    @OneToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "review_id", nullable = true)
+    private ReviewEntity review;
 
     public ConversationEntity() {
     }

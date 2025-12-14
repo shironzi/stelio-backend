@@ -10,20 +10,24 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import lombok.Data;
+import lombok.ToString;
 
 @Entity
 @Data
 @Table(name = "reviews")
+@ToString(exclude = { "conversation" })
 public class ReviewEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
     private Double stars;
+
     private String message;
 
     private LocalDateTime created_at;
@@ -33,6 +37,10 @@ public class ReviewEntity {
     @JoinColumn(name = "property_id")
     private PropertyEntity property;
 
+    @OneToOne(mappedBy = "review", orphanRemoval = true, fetch = FetchType.LAZY)
+    private ConversationEntity conversation;
+
+    // Owner of the review
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private UserEntity user;

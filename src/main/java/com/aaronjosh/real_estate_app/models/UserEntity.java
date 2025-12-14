@@ -40,7 +40,7 @@ import lombok.ToString;
 @Entity
 @Data
 @Table(name = "users")
-@ToString(exclude = { "favorites", "properties", "bookings" })
+@ToString(exclude = { "favorites", "properties", "bookings", "reviews", "joinedConversations", "messages" })
 public class UserEntity {
     public enum Role {
         ADMIN,
