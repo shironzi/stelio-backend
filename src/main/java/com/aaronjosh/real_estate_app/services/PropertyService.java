@@ -14,7 +14,7 @@ import org.springframework.http.HttpStatus;
 import com.aaronjosh.real_estate_app.dto.property.PropertyDto;
 import com.aaronjosh.real_estate_app.dto.property.PropertyResDto;
 import com.aaronjosh.real_estate_app.dto.property.UpdatePropertyDto;
-import com.aaronjosh.real_estate_app.models.PropertyImageEntity;
+import com.aaronjosh.real_estate_app.models.FileEntity;
 import com.aaronjosh.real_estate_app.models.PropertyStats;
 import com.aaronjosh.real_estate_app.models.PropertyEntity;
 import com.aaronjosh.real_estate_app.models.UserEntity;
@@ -90,7 +90,7 @@ public class PropertyService {
         // adding the relation of images to property
         for (MultipartFile image : propertyDto.getImage()) {
             try {
-                PropertyImageEntity file = new PropertyImageEntity();
+                FileEntity file = new FileEntity();
 
                 file.setName(image.getOriginalFilename());
                 file.setType(image.getContentType());

@@ -76,14 +76,14 @@ public class PropertyEntity {
     @NotBlank(message = "City is required")
     private String city;
 
+    private LocalDateTime created_at;
+    private LocalDateTime updated_at;
+
     @Enumerated(EnumType.STRING)
     private PropertyStatus status = PropertyStatus.ACTIVE;
 
-    private LocalDateTime updatedAt = LocalDateTime.now();
-    private LocalDateTime createdAt = LocalDateTime.now();
-
     @OneToMany(mappedBy = "propertyEntity", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<PropertyImageEntity> image = new ArrayList<>();
+    private List<FileEntity> image = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "host_id")
@@ -98,6 +98,9 @@ public class PropertyEntity {
     @OneToOne(mappedBy = "property", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private PropertyStats stats;
 
+    @OneToMany(mappedBy = "property", orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<ReviewEntity> reviews = new ArrayList<>();
+
     public PropertyEntity() {
     }
 
@@ -106,23 +109,14 @@ public class PropertyEntity {
         favorite.setProperty(this);
     }
 
-    public PropertyEntity(UUID id, String title, String description, BigDecimal price,
-            PropertyType propertyType, Integer maxGuest, Integer totalBedroom,
-            Integer totalBed, Integer totalBath, String address, String city, List<PropertyImageEntity> image) {
-        this.id = id;
-        this.title = title;
-        this.description = description;
-        this.price = price;
-        this.propertyType = propertyType;
-        this.maxGuest = maxGuest;
-        this.totalBedroom = totalBedroom;
-        this.totalBed = totalBed;
-        this.totalBath = totalBath;
-        this.address = address;
-        this.city = city;
-        this.image = image;
-        this.status = PropertyStatus.ACTIVE;
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
+    @PrePersist
+    protected void onCreate() {
+        created_at = LocalDateTime.now();
+        updated_at = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updated_at = LocalDateTime.now();
     }
 }

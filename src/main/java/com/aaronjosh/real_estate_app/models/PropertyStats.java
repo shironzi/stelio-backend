@@ -1,5 +1,6 @@
 package com.aaronjosh.real_estate_app.models;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -13,6 +14,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import lombok.Data;
@@ -40,6 +43,9 @@ public class PropertyStats {
     private Integer declined = 0;
     private Integer cancelled = 0;
 
+    private LocalDateTime created_at;
+    private LocalDateTime updated_at;
+
     @OneToOne
     @JoinColumn(name = "property_id")
     private PropertyEntity property;
@@ -49,4 +55,15 @@ public class PropertyStats {
 
     @Transient
     private List<RecentGuest> recentGuests = new ArrayList<>();
+
+    @PrePersist
+    protected void onCreate() {
+        created_at = LocalDateTime.now();
+        updated_at = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updated_at = LocalDateTime.now();
+    }
 }

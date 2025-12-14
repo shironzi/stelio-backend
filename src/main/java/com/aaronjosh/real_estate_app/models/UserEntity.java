@@ -86,6 +86,15 @@ public class UserEntity {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<BookingEntity> bookings = new ArrayList<>();
 
+    @OneToMany(mappedBy = "user", orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<ReviewEntity> reviews = new ArrayList<>();
+
+    @OneToMany(mappedBy = "whoJoined", fetch = FetchType.LAZY)
+    private List<ParticipantEntity> joinedConversations = new ArrayList<>();
+
+    @OneToMany(mappedBy = "from", fetch = FetchType.LAZY)
+    private List<MessageEntity> messages = new ArrayList<>();
+
     public UserEntity() {
     }
 
