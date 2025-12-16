@@ -29,12 +29,23 @@ public class BookingEntity {
         REJECTED,
     }
 
+    public enum PaymentStatus {
+        PENDING,
+        PAID
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+    private LocalDateTime startDateTime;
+    private LocalDateTime endDateTime;
+    private PaymentStatus paymentStatus = PaymentStatus.PENDING;
 
     private LocalDateTime created_at;
     private LocalDateTime updated_at;
+
+    public BookingEntity() {
+    }
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "property_id", nullable = false)
@@ -43,12 +54,6 @@ public class BookingEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;
-
-    private LocalDateTime startDateTime;
-    private LocalDateTime endDateTime;
-
-    public BookingEntity() {
-    }
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

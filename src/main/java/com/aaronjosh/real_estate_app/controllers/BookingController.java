@@ -10,6 +10,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.aaronjosh.real_estate_app.dto.booking.PropertyBookingResDto;
 import com.aaronjosh.real_estate_app.dto.booking.ScheduleReqDto;
 import com.aaronjosh.real_estate_app.models.BookingEntity;
 import com.aaronjosh.real_estate_app.models.BookingEntity.BookingStatus;
@@ -38,12 +39,21 @@ public class BookingController {
         return ResponseEntity.ok(Map.of("success", true, "booking", bookings));
     }
 
-    @PreAuthorize("OWNER")
+    @PreAuthorize("hasRole('OWNER')")
     @GetMapping("/owner/")
     public ResponseEntity<?> getPropertiesBookings() {
         List<BookingEntity> bookings = bookingService.getPropertyBookings();
 
         return ResponseEntity.ok(Map.of("success", true, "booking", bookings));
+    }
+
+    @PreAuthorize("hasRole('OWNER')")
+    @GetMapping("/owner/{propertyId}")
+    public ResponseEntity<?> getPropertyBookingsByPropertyId(@Valid @PathVariable UUID propertyId) {
+        List<PropertyBookingResDto> bookings = bookingService.getPropertyBookingsByPropertyId(propertyId);
+
+        return ResponseEntity
+                .ok(Map.of("success", true, "message", "successfully fetched the bookings", "bookings", bookings));
     }
 
     @GetMapping("/{bookingId}")
@@ -53,7 +63,7 @@ public class BookingController {
         return ResponseEntity.ok(Map.of("success", true, "booking", booking));
     }
 
-    @PreAuthorize("RENTER")
+    @PreAuthorize("hasRole('RENTER')")
     @PostMapping("/{bookingId}")
     public ResponseEntity<?> requestBooking(@Valid @PathVariable UUID bookingId, @RequestBody ScheduleReqDto schedule) {
         bookingService.requestBooking(bookingId, schedule);
@@ -61,7 +71,7 @@ public class BookingController {
         return ResponseEntity.ok(Map.of("success", true, "message", "Successfully requested to book a property."));
     }
 
-    @PreAuthorize("OWNER")
+    @PreAuthorize("hasRole('OWNER')")
     @PatchMapping("/{bookingId}/status")
     public ResponseEntity<?> updateBookingStatus(@Valid @PathVariable UUID bookingId,
             @RequestBody BookingStatus status) {
@@ -70,7 +80,7 @@ public class BookingController {
         return ResponseEntity.ok(Map.of("success", true, "message", "Successfully updated the booking status."));
     }
 
-    @PreAuthorize("RENTER")
+    @PreAuthorize("hasRole('RENTER')")
     @PatchMapping("/{bookingId}/cancel")
     public ResponseEntity<?> cancelBooking(@Valid @PathVariable UUID bookingId) {
         bookingService.cancelBooking(bookingId);

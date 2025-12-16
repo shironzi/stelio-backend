@@ -1,14 +1,18 @@
 package com.aaronjosh.real_estate_app.services;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.Objects;
+import java.math.BigDecimal;
+import java.time.temporal.ChronoUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.aaronjosh.real_estate_app.dto.booking.PropertyBookingResDto;
 import com.aaronjosh.real_estate_app.dto.booking.ScheduleReqDto;
 import com.aaronjosh.real_estate_app.models.BookingEntity;
 import com.aaronjosh.real_estate_app.models.PropertyEntity;
@@ -136,5 +140,44 @@ public class BookingService {
 
         booking.setStatus(status);
         bookingRepo.save(booking);
+    }
+
+    @Transactional
+    public List<PropertyBookingResDto> getPropertyBookingsByPropertyId(UUID propertyId) {
+
+        // checks the ownership of property
+        UserEntity owner = userService.getUserEntity();
+        PropertyEntity property = propertyRepo.findById(propertyId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        if (!owner.getId().equals(property.getHost().getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+
+        List<BookingEntity> bookings = property.getBookings();
+
+        List<PropertyBookingResDto> dtos = new ArrayList<>();
+
+        for (BookingEntity booking : bookings) {
+            PropertyBookingResDto dto = new PropertyBookingResDto();
+
+            String name = booking.getUser().getFirstname() + " " + booking.getUser().getLastname();
+            long totalDays = ChronoUnit.DAYS.between(booking.getStartDateTime(), booking.getEndDateTime());
+            Integer totalNights = (int) totalDays;
+
+            dto.setTitle(property.getTitle());
+            dto.setRenterName(name);
+            dto.setTotalNights(totalNights);
+            dto.setStartDateTime(booking.getStartDateTime());
+            dto.setEndDateTime(booking.getEndDateTime());
+            dto.setPaymentStatus(booking.getPaymentStatus());
+            dto.setTotalPrice(BigDecimal.valueOf(totalNights).multiply(property.getPrice()));
+            dto.setStatus(booking.getStatus());
+            dto.setTotalGuest(1);
+
+            dtos.add(dto);
+        }
+
+        return dtos;
     }
 }
