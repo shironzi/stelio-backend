@@ -11,6 +11,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
@@ -38,6 +39,10 @@ public class ConversationEntity {
     @OneToOne(fetch = FetchType.LAZY, optional = true)
     @JoinColumn(name = "review_id", nullable = true)
     private ReviewEntity review;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "property_id", nullable = true)
+    private PropertyEntity property;
 
     public ConversationEntity() {
     }

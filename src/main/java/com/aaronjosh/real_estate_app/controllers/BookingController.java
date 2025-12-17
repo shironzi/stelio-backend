@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.aaronjosh.real_estate_app.dto.booking.PropertyBookingResDto;
-import com.aaronjosh.real_estate_app.dto.booking.ScheduleReqDto;
+import com.aaronjosh.real_estate_app.dto.booking.BookingReqDto;
 import com.aaronjosh.real_estate_app.models.BookingEntity;
 import com.aaronjosh.real_estate_app.models.BookingEntity.BookingStatus;
 import com.aaronjosh.real_estate_app.services.BookingService;
@@ -65,8 +65,8 @@ public class BookingController {
 
     @PreAuthorize("hasRole('RENTER')")
     @PostMapping("/{bookingId}")
-    public ResponseEntity<?> requestBooking(@Valid @PathVariable UUID bookingId, @RequestBody ScheduleReqDto schedule) {
-        bookingService.requestBooking(bookingId, schedule);
+    public ResponseEntity<?> requestBooking(@Valid @PathVariable UUID bookingId, @RequestBody BookingReqDto booking) {
+        bookingService.requestBooking(bookingId, booking);
 
         return ResponseEntity.ok(Map.of("success", true, "message", "Successfully requested to book a property."));
     }

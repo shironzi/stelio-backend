@@ -1,6 +1,7 @@
 package com.aaronjosh.real_estate_app.models;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 import jakarta.persistence.Column;
@@ -34,12 +35,26 @@ public class BookingEntity {
         PAID
     }
 
+    public enum SpecialRequest {
+        LATECHECKIN,
+        PARKING,
+        BABYCRIB
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+
+    @Enumerated(EnumType.STRING)
+    private PaymentStatus paymentStatus = PaymentStatus.PENDING;
     private LocalDateTime startDateTime;
     private LocalDateTime endDateTime;
-    private PaymentStatus paymentStatus = PaymentStatus.PENDING;
+
+    @Enumerated(EnumType.STRING)
+    private SpecialRequest specialRequest;
+    private List<String> guestNames;
+    private Integer totalGuests;
+    private String contactPhone;
 
     private LocalDateTime created_at;
     private LocalDateTime updated_at;

@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.aaronjosh.real_estate_app.dto.booking.PropertyBookingResDto;
-import com.aaronjosh.real_estate_app.dto.booking.ScheduleReqDto;
+import com.aaronjosh.real_estate_app.dto.booking.BookingReqDto;
 import com.aaronjosh.real_estate_app.models.BookingEntity;
 import com.aaronjosh.real_estate_app.models.PropertyEntity;
 import com.aaronjosh.real_estate_app.models.UserEntity;
@@ -60,7 +60,7 @@ public class BookingService {
 
     @Transactional
     // creating a request for booking a property.
-    public void requestBooking(UUID propertyId, ScheduleReqDto bookingSchedule) {
+    public void requestBooking(UUID propertyId, BookingReqDto bookingInfo) {
         // get user details
         UserEntity user = userService.getUserEntity();
 
@@ -77,24 +77,37 @@ public class BookingService {
 
         // checks if there was conflict on schedules
         List<BookingEntity> existingBookings = bookingRepo.findOverlappingBookings(property.getId(),
-                bookingSchedule.getEnd(), bookingSchedule.getStart());
+                bookingInfo.getEnd(), bookingInfo.getStart());
 
         if (!existingBookings.isEmpty()) {
-            String startFormatted = DateTimeUtils.formatLongDateTime(bookingSchedule.getStart());
-            String endFormatted = DateTimeUtils.formatLongDateTime(bookingSchedule.getEnd());
+            String startFormatted = DateTimeUtils.formatLongDateTime(bookingInfo.getStart());
+            String endFormatted = DateTimeUtils.formatLongDateTime(bookingInfo.getEnd());
 
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
                     "The property is not available from " + startFormatted + " to " + endFormatted);
         }
 
+        // Add Utils that create request booking message template
+
         // creating a booking entity
         BookingEntity booking = new BookingEntity();
         booking.setProperty(property);
         booking.setStatus(BookingStatus.PENDING);
         booking.setUser(user);
-        booking.setStartDateTime(bookingSchedule.getStart());
-        booking.setEndDateTime(bookingSchedule.getEnd());
+        booking.setStartDateTime(bookingInfo.getStart());
+        booking.setEndDateTime(bookingInfo.getEnd());
+        booking.setTotalGuests(bookingInfo.getTotalGuests());
+        booking.setContactPhone(bookingInfo.getContactPhone());
+
+        if (bookingInfo.getSpecialRequest() != null) {
+            booking.setSpecialRequest(bookingInfo.getSpecialRequest());
+        }
+
+        if (bookingInfo.getGuestNames() != null) {
+            booking.setGuestNames(bookingInfo.getGuestNames());
+        }
+
         bookingRepo.save(booking);
     }
 
@@ -173,7 +186,8 @@ public class BookingService {
             dto.setPaymentStatus(booking.getPaymentStatus());
             dto.setTotalPrice(BigDecimal.valueOf(totalNights).multiply(property.getPrice()));
             dto.setStatus(booking.getStatus());
-            dto.setTotalGuest(1);
+            dto.setTotalGuest(booking.getTotalGuests());
+            dto.setSpecialRequest(booking.getSpecialRequest());
 
             dtos.add(dto);
         }
