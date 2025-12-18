@@ -38,7 +38,8 @@ public class BookingEntity {
     public enum SpecialRequest {
         LATECHECKIN,
         PARKING,
-        BABYCRIB
+        BABYCRIB,
+        NONE
     }
 
     @Id
@@ -51,7 +52,7 @@ public class BookingEntity {
     private LocalDateTime endDateTime;
 
     @Enumerated(EnumType.STRING)
-    private SpecialRequest specialRequest;
+    private SpecialRequest specialRequest = SpecialRequest.NONE;
     private List<String> guestNames;
     private Integer totalGuests;
     private String contactPhone;

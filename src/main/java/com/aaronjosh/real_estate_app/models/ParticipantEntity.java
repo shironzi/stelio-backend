@@ -33,8 +33,8 @@ public class ParticipantEntity {
 
     private LocalDateTime joinedAt;
     private LocalDateTime updated_at;
-    private Boolean muted;
-    private Integer unreadCount;
+    private Boolean muted = false;
+    private Integer unreadCount = 0;
 
     @Enumerated(EnumType.STRING)
     private MessageRole role = MessageRole.MEMBER;
