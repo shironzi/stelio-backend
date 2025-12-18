@@ -11,7 +11,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
@@ -30,7 +29,7 @@ public class ConversationEntity {
     private LocalDateTime created_at;
     private LocalDateTime updated_at;
 
-    @OneToOne(mappedBy = "conversation", fetch = FetchType.LAZY, orphanRemoval = true)
+    @OneToMany(mappedBy = "conversation", fetch = FetchType.LAZY, orphanRemoval = true)
     private List<ParticipantEntity> participants = new ArrayList<>();
 
     @OneToMany(mappedBy = "conversation", fetch = FetchType.LAZY, orphanRemoval = true)
