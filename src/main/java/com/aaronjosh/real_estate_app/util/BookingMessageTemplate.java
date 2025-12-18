@@ -1,45 +1,46 @@
 package com.aaronjosh.real_estate_app.util;
 
+import java.time.temporal.ChronoUnit;
+import java.time.LocalDateTime;
+
 import org.springframework.stereotype.Component;
 
 import com.aaronjosh.real_estate_app.dto.booking.BookingReqDto;
 import com.aaronjosh.real_estate_app.models.PropertyEntity;
+import com.aaronjosh.real_estate_app.models.BookingEntity.SpecialRequest;
 
 @Component
 public class BookingMessageTemplate {
+
     public String MessageTemplate(BookingReqDto bookingInfo, PropertyEntity property) {
 
         String ownerName = property.getHost().getFirstname() + " " + property.getHost().getLastname();
 
-        return "Hello " + ownerName + "\n🏠 Property\n" + //
-                "\n" + //
-                property.getTitle() + //
-                "\n" + //
-                "\n" + //
-                "📅 Stay Details\n" + //
-                "\n" + //
-                "Check-in: " + bookingInfo.getStart() + "\n" + //
-                "\n" + //
-                "Check-out: " + bookingInfo.getEnd() + "\n" + //
-                "\n" + //
-                "Total Nights: {totalNights}\n" + //
-                "\n" + //
-                "Guests: {totalGuests}\n" + //
-                "\n" + //
-                "👤 Guest Information\n" + //
-                "\n" + //
-                "Primary Guest: {primaryGuestName}\n" + //
-                "\n" + //
-                "Contact Phone: {contactPhone}\n" + //
-                "\n" + //
-                "Guest Names: {guestNames} (if provided)\n" + //
-                "\n" + //
-                "📝 Special Requests\n" + //
-                "\n" + //
-                "{specialRequests or \"None\"}\n" + //
-                "\n" + //
-                "💳 Payment Status\n" + //
-                "\n" + //
-                "{paymentStatus}";
+        // Calculate total nights
+        LocalDateTime start = bookingInfo.getStart();
+        LocalDateTime end = bookingInfo.getEnd();
+        long totalDays = ChronoUnit.DAYS.between(start, end);
+        int totalNights = (int) totalDays;
+
+        // Handle optional fields
+        String specialRequests = bookingInfo.getSpecialRequest() == SpecialRequest.NONE
+                ? bookingInfo.getSpecialRequest().toString().toLowerCase()
+                : "None";
+
+        return "Hello " + ownerName + "\n" +
+                "🏠 Property\n" +
+                property.getTitle() + "\n\n" +
+                "📅 Stay Details\n" +
+                "Check-in: " + start + "\n" +
+                "Check-out: " + end + "\n" +
+                "Total Nights: " + totalNights + "\n" +
+                "Guests: " + bookingInfo.getTotalGuests() + "\n\n" +
+                "👤 Guest Information\n" +
+                "Contact Phone: " + bookingInfo.getContactPhone() + "\n" +
+                "Guest Names: " + bookingInfo.getGuestNames() + "\n\n" +
+                "📝 Special Requests\n" +
+                specialRequests + "\n\n" +
+                "💳 Payment Status\n" +
+                "Pending";
     }
 }
