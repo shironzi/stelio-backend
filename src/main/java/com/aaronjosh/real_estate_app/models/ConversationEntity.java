@@ -30,7 +30,7 @@ public class ConversationEntity {
     private LocalDateTime created_at;
     private LocalDateTime updated_at;
 
-    @OneToMany(mappedBy = "conversation", fetch = FetchType.LAZY, orphanRemoval = true)
+    @OneToOne(mappedBy = "conversation", fetch = FetchType.LAZY, orphanRemoval = true)
     private List<ParticipantEntity> participants = new ArrayList<>();
 
     @OneToMany(mappedBy = "conversation", fetch = FetchType.LAZY, orphanRemoval = true)
@@ -39,10 +39,6 @@ public class ConversationEntity {
     @OneToOne(fetch = FetchType.LAZY, optional = true)
     @JoinColumn(name = "review_id", nullable = true)
     private ReviewEntity review;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = true)
-    @JoinColumn(name = "property_id", nullable = true)
-    private PropertyEntity property;
 
     public ConversationEntity() {
     }

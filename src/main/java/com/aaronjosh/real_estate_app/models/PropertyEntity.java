@@ -101,9 +101,6 @@ public class PropertyEntity {
     @OneToMany(mappedBy = "property", orphanRemoval = true, fetch = FetchType.LAZY)
     private List<ReviewEntity> reviews = new ArrayList<>();
 
-    @OneToMany(mappedBy = "property", fetch = FetchType.LAZY)
-    private List<ConversationEntity> conversations = new ArrayList<>();
-
     public PropertyEntity() {
     }
 
