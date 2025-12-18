@@ -15,11 +15,16 @@ import org.springframework.web.server.ResponseStatusException;
 import com.aaronjosh.real_estate_app.dto.booking.PropertyBookingResDto;
 import com.aaronjosh.real_estate_app.dto.booking.BookingReqDto;
 import com.aaronjosh.real_estate_app.models.BookingEntity;
+import com.aaronjosh.real_estate_app.models.ConversationEntity;
+import com.aaronjosh.real_estate_app.models.MessageEntity;
+import com.aaronjosh.real_estate_app.models.ParticipantEntity;
 import com.aaronjosh.real_estate_app.models.PropertyEntity;
 import com.aaronjosh.real_estate_app.models.UserEntity;
 import com.aaronjosh.real_estate_app.models.BookingEntity.BookingStatus;
 import com.aaronjosh.real_estate_app.repositories.BookingRepo;
+import com.aaronjosh.real_estate_app.repositories.ConversationRepository;
 import com.aaronjosh.real_estate_app.repositories.PropertyRepository;
+import com.aaronjosh.real_estate_app.util.BookingMessageTemplate;
 import com.aaronjosh.real_estate_app.util.DateTimeUtils;
 
 import jakarta.transaction.Transactional;
@@ -35,6 +40,12 @@ public class BookingService {
 
     @Autowired
     private PropertyRepository propertyRepo;
+
+    @Autowired
+    private BookingMessageTemplate bookingMessageTemplate;
+
+    @Autowired
+    private ConversationRepository conversationRepo;
 
     // returns bookings from a user.
     public List<BookingEntity> getBookings() {
@@ -59,23 +70,23 @@ public class BookingService {
     }
 
     @Transactional
-    // creating a request for booking a property.
+    // Create booking request.
     public void requestBooking(UUID propertyId, BookingReqDto bookingInfo) {
-        // get user details
+        // Renter details
         UserEntity user = userService.getUserEntity();
 
-        // get property
+        // Property details
         PropertyEntity property = propertyRepo.findById(Objects.requireNonNull(propertyId))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "property not found"));
 
-        // verify if there was a active request
+        // Checks pending booking
         boolean hasActiveBooking = bookingRepo.existsByUser_IdAndStatus(user.getId(), BookingStatus.PENDING);
 
         if (hasActiveBooking) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "You already have a pending booking.");
         }
 
-        // checks if there was conflict on schedules
+        // Check for booking date conflicts
         List<BookingEntity> existingBookings = bookingRepo.findOverlappingBookings(property.getId(),
                 bookingInfo.getEnd(), bookingInfo.getStart());
 
@@ -88,9 +99,7 @@ public class BookingService {
                     "The property is not available from " + startFormatted + " to " + endFormatted);
         }
 
-        // Add Utils that create request booking message template
-
-        // creating a booking entity
+        // Create booking entity
         BookingEntity booking = new BookingEntity();
         booking.setProperty(property);
         booking.setStatus(BookingStatus.PENDING);
@@ -100,6 +109,7 @@ public class BookingService {
         booking.setTotalGuests(bookingInfo.getTotalGuests());
         booking.setContactPhone(bookingInfo.getContactPhone());
 
+        // Checks special requests
         if (bookingInfo.getSpecialRequest() != null) {
             booking.setSpecialRequest(bookingInfo.getSpecialRequest());
         }
@@ -109,6 +119,29 @@ public class BookingService {
         }
 
         bookingRepo.save(booking);
+
+        // Create conversation
+        ConversationEntity conversation = new ConversationEntity();
+
+        // Create participants
+        ParticipantEntity propertyOwner = new ParticipantEntity();
+        propertyOwner.setWhoJoined(property.getHost());
+
+        ParticipantEntity renter = new ParticipantEntity();
+        renter.setWhoJoined(user);
+
+        // Create initial message
+        String messageTemplate = bookingMessageTemplate.MessageTemplate(bookingInfo, property);
+        MessageEntity message = new MessageEntity();
+        message.setMesssages(messageTemplate);
+        message.setFrom(user);
+
+        conversation.setParticipants(List.of(propertyOwner, renter));
+        conversation.setMessages(List.of(message));
+        propertyOwner.setConversation(conversation);
+        renter.setConversation(conversation);
+
+        conversationRepo.save(conversation);
     }
 
     // cancel booking from renters
