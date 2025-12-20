@@ -60,7 +60,7 @@ public class PropertyController {
         return ResponseEntity.ok(Map.of("success", true, "message", "Property created Successfully"));
     }
 
-    @PostMapping("/{id}")
+    @PostMapping("/{propertyId}")
     @PreAuthorize("hasRole('OWNER')")
     public ResponseEntity<?> editProperty(@PathVariable UUID propertyId,
             @RequestBody UpdatePropertyDto propertyDto) {
@@ -69,7 +69,7 @@ public class PropertyController {
         return ResponseEntity.ok(Map.of("success", true, "message", "Property Updated Successfully"));
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{propertyId}")
     @PreAuthorize("hasRole('OWNER')")
     public ResponseEntity<?> deleteProperty(@PathVariable UUID propertyId) {
         propertyService.deleteProperty(propertyId);
