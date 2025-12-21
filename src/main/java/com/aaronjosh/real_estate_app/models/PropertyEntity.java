@@ -82,23 +82,23 @@ public class PropertyEntity {
     @Enumerated(EnumType.STRING)
     private PropertyStatus status = PropertyStatus.ACTIVE;
 
-    @OneToMany(mappedBy = "propertyEntity", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "propertyEntity", cascade = CascadeType.PERSIST, orphanRemoval = true)
     private List<FileEntity> image = new ArrayList<>();
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "host_id")
     private UserEntity host;
 
-    @OneToMany(mappedBy = "property", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "property", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<FavoriteEntity> favorites = new ArrayList<>();
 
-    @OneToMany(mappedBy = "property", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "property", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<BookingEntity> bookings = new ArrayList<>();
 
-    @OneToOne(mappedBy = "property", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "property", cascade = CascadeType.PERSIST, orphanRemoval = true, fetch = FetchType.LAZY)
     private PropertyStats stats;
 
-    @OneToMany(mappedBy = "property", orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "property", fetch = FetchType.LAZY)
     private List<ReviewEntity> reviews = new ArrayList<>();
 
     public PropertyEntity() {

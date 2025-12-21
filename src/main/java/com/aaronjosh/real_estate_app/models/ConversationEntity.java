@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -29,10 +30,10 @@ public class ConversationEntity {
     private LocalDateTime created_at;
     private LocalDateTime updated_at;
 
-    @OneToMany(mappedBy = "conversation", fetch = FetchType.LAZY, orphanRemoval = true)
+    @OneToMany(mappedBy = "conversation", fetch = FetchType.LAZY, orphanRemoval = true, cascade = CascadeType.REMOVE)
     private List<ParticipantEntity> participants = new ArrayList<>();
 
-    @OneToMany(mappedBy = "conversation", fetch = FetchType.LAZY, orphanRemoval = true)
+    @OneToMany(mappedBy = "conversation", fetch = FetchType.LAZY, orphanRemoval = true, cascade = CascadeType.REMOVE)
     private List<MessageEntity> messages = new ArrayList<>();
 
     @OneToOne(fetch = FetchType.LAZY, optional = true)

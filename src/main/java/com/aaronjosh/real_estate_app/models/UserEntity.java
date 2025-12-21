@@ -77,16 +77,16 @@ public class UserEntity {
 
     private LocalDateTime updated_at = LocalDateTime.now();
 
-    @OneToMany(mappedBy = "host", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "host", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<PropertyEntity> properties;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<FavoriteEntity> favorites = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<BookingEntity> bookings = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user", orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     private List<ReviewEntity> reviews = new ArrayList<>();
 
     @OneToMany(mappedBy = "whoJoined", fetch = FetchType.LAZY)

@@ -20,6 +20,7 @@ import com.aaronjosh.real_estate_app.models.PropertyEntity;
 import com.aaronjosh.real_estate_app.models.UserEntity;
 import com.aaronjosh.real_estate_app.models.PropertyEntity.PropertyStatus;
 import com.aaronjosh.real_estate_app.repositories.PropertyRepository;
+import com.aaronjosh.real_estate_app.repositories.PropertyStatsRepo;
 import com.aaronjosh.real_estate_app.repositories.UserRepository;
 import com.aaronjosh.real_estate_app.util.PropertyMapper;
 import com.aaronjosh.real_estate_app.util.PropertyMapperWithSchedules;

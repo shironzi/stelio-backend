@@ -33,7 +33,7 @@ public class MessageEntity {
     private LocalDateTime created_at;
     private LocalDateTime updated_at;
 
-    @OneToMany(mappedBy = "message", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "message", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<FileEntity> files = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
