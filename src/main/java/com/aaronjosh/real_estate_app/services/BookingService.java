@@ -211,6 +211,7 @@ public class BookingService {
             long totalDays = ChronoUnit.DAYS.between(booking.getStartDateTime(), booking.getEndDateTime());
             Integer totalNights = (int) totalDays;
 
+            dto.setId(booking.getId());
             dto.setTitle(property.getTitle());
             dto.setRenterName(name);
             dto.setTotalNights(totalNights);

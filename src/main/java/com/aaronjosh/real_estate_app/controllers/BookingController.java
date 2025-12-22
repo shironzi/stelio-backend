@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.aaronjosh.real_estate_app.dto.booking.PropertyBookingResDto;
+import com.aaronjosh.real_estate_app.dto.booking.UpdateBookingStatusReq;
 import com.aaronjosh.real_estate_app.dto.booking.BookingReqDto;
 import com.aaronjosh.real_estate_app.models.BookingEntity;
 import com.aaronjosh.real_estate_app.models.BookingEntity.BookingStatus;
@@ -74,8 +75,8 @@ public class BookingController {
     @PreAuthorize("hasRole('OWNER')")
     @PatchMapping("/{bookingId}/status")
     public ResponseEntity<?> updateBookingStatus(@Valid @PathVariable UUID bookingId,
-            @RequestBody BookingStatus status) {
-        bookingService.updateBookingStatus(bookingId, status);
+            @RequestBody UpdateBookingStatusReq status) {
+        bookingService.updateBookingStatus(bookingId, status.status());
 
         return ResponseEntity.ok(Map.of("success", true, "message", "Successfully updated the booking status."));
     }

@@ -28,6 +28,8 @@ public class BookingEntity {
         PENDING,
         APPROVED,
         REJECTED,
+        NOSHOW,
+        COMPLETED
     }
 
     public enum PaymentStatus {
