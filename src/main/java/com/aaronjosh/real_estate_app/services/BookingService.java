@@ -15,16 +15,11 @@ import org.springframework.web.server.ResponseStatusException;
 import com.aaronjosh.real_estate_app.dto.booking.PropertyBookingResDto;
 import com.aaronjosh.real_estate_app.dto.booking.BookingReqDto;
 import com.aaronjosh.real_estate_app.models.BookingEntity;
-import com.aaronjosh.real_estate_app.models.ConversationEntity;
-import com.aaronjosh.real_estate_app.models.MessageEntity;
-import com.aaronjosh.real_estate_app.models.ParticipantEntity;
 import com.aaronjosh.real_estate_app.models.PropertyEntity;
 import com.aaronjosh.real_estate_app.models.UserEntity;
 import com.aaronjosh.real_estate_app.models.BookingEntity.BookingStatus;
 import com.aaronjosh.real_estate_app.repositories.BookingRepo;
-import com.aaronjosh.real_estate_app.repositories.ConversationRepository;
 import com.aaronjosh.real_estate_app.repositories.PropertyRepository;
-import com.aaronjosh.real_estate_app.util.BookingMessageTemplate;
 import com.aaronjosh.real_estate_app.util.DateTimeUtils;
 
 import jakarta.transaction.Transactional;
@@ -40,12 +35,6 @@ public class BookingService {
 
     @Autowired
     private PropertyRepository propertyRepo;
-
-    @Autowired
-    private BookingMessageTemplate bookingMessageTemplate;
-
-    @Autowired
-    private ConversationRepository conversationRepo;
 
     // returns bookings from a user.
     public List<BookingEntity> getBookings() {
@@ -119,29 +108,6 @@ public class BookingService {
         }
 
         bookingRepo.save(booking);
-
-        // Create conversation
-        ConversationEntity conversation = new ConversationEntity();
-
-        // Create participants
-        ParticipantEntity propertyOwner = new ParticipantEntity();
-        propertyOwner.setWhoJoined(property.getHost());
-
-        ParticipantEntity renter = new ParticipantEntity();
-        renter.setWhoJoined(user);
-
-        // Create initial message
-        String messageTemplate = bookingMessageTemplate.MessageTemplate(bookingInfo, property);
-        MessageEntity message = new MessageEntity();
-        message.setMesssages(messageTemplate);
-        message.setFrom(user);
-
-        conversation.setParticipants(List.of(propertyOwner, renter));
-        conversation.setMessages(List.of(message));
-        propertyOwner.setConversation(conversation);
-        renter.setConversation(conversation);
-
-        conversationRepo.save(conversation);
     }
 
     // cancel booking from renters
