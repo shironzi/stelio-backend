@@ -49,7 +49,7 @@ public class ReviewService {
 
                     reviewInfo.setMessage(message.getMesssages());
                     reviewInfo.setFrom(sender);
-                    reviewInfo.setDate(message.getCreated_at());
+                    reviewInfo.setDate(message.getCreatedAt());
 
                     reviewInfos.add(reviewInfo);
                 }

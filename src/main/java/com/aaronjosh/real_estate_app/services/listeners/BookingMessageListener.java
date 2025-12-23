@@ -1,12 +1,14 @@
 package com.aaronjosh.real_estate_app.services.listeners;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 import com.aaronjosh.real_estate_app.models.event.BookingRequestedEvent;
 import com.aaronjosh.real_estate_app.services.MessageService;
 
+@Component
 public class BookingMessageListener {
 
     @Autowired

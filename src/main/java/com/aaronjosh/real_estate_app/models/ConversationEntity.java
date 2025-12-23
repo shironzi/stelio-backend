@@ -27,13 +27,16 @@ public class ConversationEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    private String conversationName;
+
     private LocalDateTime created_at;
     private LocalDateTime updated_at;
 
-    @OneToMany(mappedBy = "conversation", fetch = FetchType.LAZY, orphanRemoval = true, cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "conversation", fetch = FetchType.LAZY, orphanRemoval = true, cascade = CascadeType.PERSIST)
     private List<ParticipantEntity> participants = new ArrayList<>();
 
-    @OneToMany(mappedBy = "conversation", fetch = FetchType.LAZY, orphanRemoval = true, cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "conversation", fetch = FetchType.LAZY, orphanRemoval = true, cascade = { CascadeType.PERSIST,
+            CascadeType.REMOVE })
     private List<MessageEntity> messages = new ArrayList<>();
 
     @OneToOne(fetch = FetchType.LAZY, optional = true)
