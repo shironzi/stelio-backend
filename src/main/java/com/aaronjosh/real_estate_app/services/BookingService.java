@@ -17,9 +17,11 @@ import com.aaronjosh.real_estate_app.dto.booking.BookingReqDto;
 import com.aaronjosh.real_estate_app.models.BookingEntity;
 import com.aaronjosh.real_estate_app.models.PropertyEntity;
 import com.aaronjosh.real_estate_app.models.UserEntity;
+import com.aaronjosh.real_estate_app.models.event.BookingRequestedEvent;
 import com.aaronjosh.real_estate_app.models.BookingEntity.BookingStatus;
 import com.aaronjosh.real_estate_app.repositories.BookingRepo;
 import com.aaronjosh.real_estate_app.repositories.PropertyRepository;
+import com.aaronjosh.real_estate_app.services.listeners.BookingMessageListener;
 import com.aaronjosh.real_estate_app.util.DateTimeUtils;
 
 import jakarta.transaction.Transactional;
@@ -35,6 +37,9 @@ public class BookingService {
 
     @Autowired
     private PropertyRepository propertyRepo;
+
+    @Autowired
+    private BookingMessageListener eventPublisher;
 
     // returns bookings from a user.
     public List<BookingEntity> getBookings() {
@@ -108,6 +113,7 @@ public class BookingService {
         }
 
         bookingRepo.save(booking);
+        eventPublisher.handleBookingRequested(new BookingRequestedEvent(bookingInfo, user, property));
     }
 
     // cancel booking from renters
