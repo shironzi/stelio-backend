@@ -179,13 +179,12 @@ public class BookingService {
         for (BookingEntity booking : bookings) {
             PropertyBookingResDto dto = new PropertyBookingResDto();
 
-            String name = booking.getUser().getFirstname() + " " + booking.getUser().getLastname();
             long totalDays = ChronoUnit.DAYS.between(booking.getStartDateTime(), booking.getEndDateTime());
             Integer totalNights = (int) totalDays;
 
             dto.setId(booking.getId());
             dto.setTitle(property.getTitle());
-            dto.setRenterName(name);
+            dto.setRenterName(booking.getUser().getFullName());
             dto.setTotalNights(totalNights);
             dto.setStartDateTime(booking.getStartDateTime());
             dto.setEndDateTime(booking.getEndDateTime());

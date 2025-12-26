@@ -9,4 +9,10 @@ public class ReviewResDto {
     private String from;
     private String message;
     private LocalDateTime date;
+
+    public ReviewResDto(String from, String message, LocalDateTime date) {
+        this.from = from;
+        this.message = message;
+        this.date = date;
+    }
 }

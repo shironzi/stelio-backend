@@ -80,11 +80,10 @@ public class AuthService {
         }
 
         String jwtToken = jwtService.generateToken(user);
-        String name = user.getFirstname() + " " + user.getLastname();
 
         LoginResDto loginData = new LoginResDto();
 
-        loginData.setName(name);
+        loginData.setName(user.getFullName());
         loginData.setEmail(user.getEmail());
         loginData.setRole(user.getRole());
         loginData.setToken(jwtToken);
