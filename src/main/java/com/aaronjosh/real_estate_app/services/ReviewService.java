@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 
 import com.aaronjosh.real_estate_app.dto.booking.ReviewResDto;
 import com.aaronjosh.real_estate_app.dto.booking.ReviewStatsResDto;
-import com.aaronjosh.real_estate_app.models.MessageEntity;
 import com.aaronjosh.real_estate_app.models.ReviewEntity;
 import com.aaronjosh.real_estate_app.models.UserEntity;
 import com.aaronjosh.real_estate_app.repositories.ReviewRepository;
@@ -26,34 +25,19 @@ public class ReviewService {
 
         for (ReviewEntity review : reviews) {
             ReviewStatsResDto dto = new ReviewStatsResDto();
-
             UserEntity user = review.getUser();
-
-            String title = user.getFirstname() + " " + user.getLastname();
-
-            dto.setTitle(title);
+            dto.setTitle(user.getFullName());
             dto.setStars(review.getStars());
             dto.setMessage(review.getMessage());
 
-            if (review.getConversation() != null && (!review.getConversation().getMessages().isEmpty())) {
-                List<MessageEntity> messages = review.getConversation().getMessages();
-
-                List<ReviewResDto> reviewInfos = new ArrayList<>();
-
-                for (MessageEntity message : messages) {
-                    ReviewResDto reviewInfo = new ReviewResDto();
-
-                    UserEntity senderInfo = message.getFrom();
-
-                    String sender = senderInfo.getFirstname() + " " + senderInfo.getLastname();
-
-                    reviewInfo.setMessage(message.getMesssages());
-                    reviewInfo.setFrom(sender);
-                    reviewInfo.setDate(message.getCreatedAt());
-
-                    reviewInfos.add(reviewInfo);
-                }
-
+            if (review.getConversation() != null && !review.getConversation().getMessages().isEmpty()) {
+                List<ReviewResDto> reviewInfos = review.getConversation().getMessages()
+                        .stream()
+                        .map(messageInfo -> new ReviewResDto(
+                                messageInfo.getFrom().getFirstname(),
+                                messageInfo.getMesssages(),
+                                messageInfo.getCreatedAt()))
+                        .toList();
                 dto.setReviews(reviewInfos);
             }
 
