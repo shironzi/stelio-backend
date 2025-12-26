@@ -10,6 +10,7 @@
 
 package com.aaronjosh.real_estate_app.models;
 
+import java.beans.Transient;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -130,5 +131,11 @@ public class UserEntity {
     @PreUpdate
     protected void onUpdate() {
         updated_at = LocalDateTime.now();
+    }
+
+    // returns the fullname.
+    @Transient
+    public String getFullName() {
+        return (firstname != null ? firstname : "") + " " + (lastname != null ? lastname : "");
     }
 }
