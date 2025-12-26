@@ -2,12 +2,15 @@ package com.aaronjosh.real_estate_app.services;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.aaronjosh.real_estate_app.dto.booking.BookingReqDto;
 import com.aaronjosh.real_estate_app.dto.message.ChatHeadDto;
+import com.aaronjosh.real_estate_app.dto.message.MessageResDto;
 import com.aaronjosh.real_estate_app.models.ConversationEntity;
 import com.aaronjosh.real_estate_app.models.MessageEntity;
 import com.aaronjosh.real_estate_app.models.ParticipantEntity;
@@ -41,7 +44,7 @@ public class MessageService {
         for (ConversationEntity convo : conversations) {
             ChatHeadDto dto = new ChatHeadDto();
 
-            List<MessageEntity> messages = messageRepository.findLatestMessage(convo.getId());
+            List<MessageEntity> messages = messageRepository.findAllMessagesByConversationId(convo.getId());
 
             MessageEntity latestMessage = messages.stream().findFirst().orElse(null);
 
@@ -57,6 +60,16 @@ public class MessageService {
         }
 
         return dtos;
+    }
+
+    public List<MessageResDto> getMessagesFromConversationId(UUID conversationId) {
+        return messageRepository.findAllMessagesByConversationId(conversationId)
+                .stream()
+                .map(messageEntity -> new MessageResDto(
+                        messageEntity.getFrom().getFullName(),
+                        messageEntity.getMesssages(),
+                        messageEntity.getCreatedAt()))
+                .collect(Collectors.toList());
     }
 
     public void createBookingRequestMessage(UserEntity user, BookingReqDto bookingInfo, PropertyEntity property) {

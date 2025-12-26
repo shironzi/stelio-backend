@@ -14,5 +14,5 @@ import com.aaronjosh.real_estate_app.models.MessageEntity;
 public interface MessageRepository extends JpaRepository<MessageEntity, UUID> {
     @Query("SELECT m FROM MessageEntity m " +
             "WHERE m.conversation.id = :conversationId")
-    List<MessageEntity> findLatestMessage(@Param("conversationId") UUID conversationId);
+    List<MessageEntity> findAllMessagesByConversationId(@Param("conversationId") UUID conversationId);
 }
