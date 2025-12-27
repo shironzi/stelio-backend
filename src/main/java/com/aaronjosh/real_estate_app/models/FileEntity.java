@@ -39,6 +39,12 @@ public class FileEntity {
     public FileEntity() {
     }
 
+    public FileEntity(String name, String type, byte[] data) {
+        this.name = name;
+        this.type = type;
+        this.data = data;
+    }
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "property_id", nullable = true)
     private PropertyEntity propertyEntity;
