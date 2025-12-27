@@ -6,12 +6,16 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.aaronjosh.real_estate_app.dto.booking.BookingReqDto;
 import com.aaronjosh.real_estate_app.dto.message.ChatHeadDto;
 import com.aaronjosh.real_estate_app.dto.message.MessageResDto;
+import com.aaronjosh.real_estate_app.dto.message.SendMessageDto;
 import com.aaronjosh.real_estate_app.models.ConversationEntity;
+import com.aaronjosh.real_estate_app.models.FileEntity;
 import com.aaronjosh.real_estate_app.models.MessageEntity;
 import com.aaronjosh.real_estate_app.models.ParticipantEntity;
 import com.aaronjosh.real_estate_app.models.PropertyEntity;
@@ -33,6 +37,9 @@ public class MessageService {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private FileService fileService;
 
     public List<ChatHeadDto> getChatHeads() {
         UserEntity user = userService.getUserEntity();
@@ -70,6 +77,27 @@ public class MessageService {
                         messageEntity.getMesssages(),
                         messageEntity.getCreatedAt()))
                 .collect(Collectors.toList());
+    }
+
+    public void sendMessageByConversationId(UUID conversationId, SendMessageDto messageInfo) {
+
+        ConversationEntity conversation = conversationRepo.findById(conversationId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Conversation not found"));
+
+        MessageEntity message = new MessageEntity();
+        message.setMesssages(messageInfo.getMessage());
+        message.setConversation(conversation);
+
+        if (messageInfo.getFiles() != null && !messageInfo.getFiles().isEmpty()) {
+            List<FileEntity> files = messageInfo.getFiles().stream()
+                    .map(file -> fileService.mapToFileEntity(file, message))
+                    .collect(Collectors.toList());
+
+            message.setFiles(files);
+        }
+
+        messageRepository.save(message);
     }
 
     public void createBookingRequestMessage(UserEntity user, BookingReqDto bookingInfo, PropertyEntity property) {

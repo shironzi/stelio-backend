@@ -15,4 +15,7 @@ public interface MessageRepository extends JpaRepository<MessageEntity, UUID> {
     @Query("SELECT m FROM MessageEntity m " +
             "WHERE m.conversation.id = :conversationId")
     List<MessageEntity> findAllMessagesByConversationId(@Param("conversationId") UUID conversationId);
+
+    @Query("INSERT INTO MessageEntity () VALUES")
+    public void sendMessage(@Param("conversationId") UUID conversationId);
 }
