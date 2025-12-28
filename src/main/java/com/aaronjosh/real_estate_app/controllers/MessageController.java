@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.repository.query.Param;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,7 +31,7 @@ public class MessageController {
         List<ChatHeadDto> chatHeads = messageService.getChatHeads();
 
         return ResponseEntity
-                .ok(Map.of("success", true, "message", "Successfully retrived messages", "chatHeads", chatHeads));
+                .ok(Map.of("success", true, "message", "Successfully retrived messages", "chats", chatHeads));
     }
 
     @PostMapping("/{conversationId}")
