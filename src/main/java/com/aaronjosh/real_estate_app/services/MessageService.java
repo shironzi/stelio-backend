@@ -23,6 +23,7 @@ import com.aaronjosh.real_estate_app.models.UserEntity;
 import com.aaronjosh.real_estate_app.repositories.ConversationRepository;
 import com.aaronjosh.real_estate_app.repositories.MessageRepository;
 import com.aaronjosh.real_estate_app.util.BookingMessageTemplate;
+import com.aaronjosh.real_estate_app.util.LinkGenerator;
 
 @Service
 public class MessageService {
@@ -40,6 +41,9 @@ public class MessageService {
 
     @Autowired
     private FileService fileService;
+
+    @Autowired
+    private LinkGenerator linkGenerator;
 
     public List<ChatHeadDto> getChatHeads() {
         UserEntity user = userService.getUserEntity();
@@ -62,6 +66,7 @@ public class MessageService {
 
             dto.setChatName(convo.getConversationName());
             dto.setProfileLink(null);
+            dto.setConversationId(convo.getId());
 
             dtos.add(dto);
         }
@@ -73,8 +78,12 @@ public class MessageService {
         return messageRepository.findAllMessagesByConversationId(conversationId)
                 .stream()
                 .map(messageEntity -> new MessageResDto(
+                        messageEntity.getFrom().getId(),
                         messageEntity.getFrom().getFullName(),
                         messageEntity.getMesssages(),
+                        messageEntity.getFiles().stream()
+                                .map(file -> linkGenerator.generateLink(file))
+                                .toArray(String[]::new),
                         messageEntity.getCreatedAt()))
                 .collect(Collectors.toList());
     }
