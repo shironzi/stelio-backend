@@ -63,14 +63,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
 
             final String jwt = authHeader.substring(7);
-
-            if (jwtService.isBlacklisted(jwt)) {
-                throw new BadCredentialsException("Token is blacklisted");
-            }
-
             final String email = jwtService.extractEmail(jwt);
-
-            System.out.println(email);
 
             if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserEntity userEntity = userRepository.findByEmail(email)

@@ -91,15 +91,11 @@ public class JwtService {
         return extractClaim(token, Claims::getExpiration).before(new Date());
     }
 
-    /*
-     * Validate JWT token against a given user.
-     * - Token must be belong to email.
-     * - Token must not be expired.
-     */
+    // Validates the token if belongs to user and not on the blacklisted
     public boolean isTokenValid(String token, UserEntity user) {
         final String email = extractEmail(token);
 
-        return (email.equals(user.getEmail()) && !isTokenExpired(token));
+        return (email.equals(user.getEmail()) && !isTokenExpired(token) && !isBlacklisted(token));
     }
 
     /*

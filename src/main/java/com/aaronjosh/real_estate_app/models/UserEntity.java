@@ -29,6 +29,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
@@ -40,7 +41,7 @@ import lombok.ToString;
 
 @Entity
 @Data
-@Table(name = "users")
+@Table(name = "users", indexes = @Index(columnList = "email"))
 @ToString(exclude = { "favorites", "properties", "bookings", "reviews", "joinedConversations", "messages" })
 public class UserEntity {
     public enum Role {
