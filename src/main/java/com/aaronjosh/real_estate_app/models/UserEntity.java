@@ -97,6 +97,9 @@ public class UserEntity {
     @OneToMany(mappedBy = "from", fetch = FetchType.LAZY)
     private List<MessageEntity> messages = new ArrayList<>();
 
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    private List<RefreshTokensEntity> refreshTokens = new ArrayList<>();
+
     public UserEntity() {
     }
 

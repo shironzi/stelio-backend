@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.aaronjosh.real_estate_app.dto.TokenResponse;
 import com.aaronjosh.real_estate_app.models.BlacklistedTokens;
 import com.aaronjosh.real_estate_app.models.UserEntity;
 import com.aaronjosh.real_estate_app.models.UserEntity.Role;
@@ -111,5 +112,13 @@ public class JwtService {
 
     public Boolean isBlacklisted(String token) {
         return blacklistedTokensRepo.findByToken(token).isPresent();
+    }
+
+    public TokenResponse generateAccessAndRefreshToken(String refreshToken) {
+        TokenResponse newToken = new TokenResponse();
+
+        
+
+        return newToken;
     }
 }
