@@ -4,15 +4,12 @@
 
 package com.aaronjosh.real_estate_app.services;
 
-import java.util.Optional;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.aaronjosh.real_estate_app.dto.TokenResponse;
 import com.aaronjosh.real_estate_app.dto.auth.LoginResDto;
 import com.aaronjosh.real_estate_app.dto.auth.RegisterReqDto;
 import com.aaronjosh.real_estate_app.exceptions.EmailAlreadyExistsException;
