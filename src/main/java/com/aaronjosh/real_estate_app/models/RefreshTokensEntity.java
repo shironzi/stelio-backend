@@ -23,7 +23,7 @@ public class RefreshTokensEntity {
     private UUID id;
 
     @Column(nullable = false, unique = true)
-    private String tokenHash;
+    private String refreshToken;
 
     @Column(nullable = false)
     private LocalDateTime expiresAt;

@@ -5,7 +5,6 @@ import java.io.IOException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -33,55 +32,51 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     AntPathMatcher matcher = new AntPathMatcher();
 
     @Override
-    protected void doFilterInternal(@NonNull HttpServletRequest req, @NonNull HttpServletResponse res,
-            @NonNull FilterChain filterChain)
-            throws ServletException, IOException {
-        try {
-            String path = req.getServletPath();
-            String method = req.getMethod();
-            final String authHeader = req.getHeader("Authorization");
+    protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
 
-            if (path.equals("/api/property/") &&
-                    method.equalsIgnoreCase("GET") && authHeader == null) {
-                filterChain.doFilter(req, res);
-                return;
-            }
+        String path = request.getRequestURI(); // IMPORTANT
+        String method = request.getMethod();
+        AntPathMatcher matcher = new AntPathMatcher();
 
-            if (matcher.match("/api/image/**", path) && method.equalsIgnoreCase("GET") &&
-                    authHeader == null) {
-                filterChain.doFilter(req, res);
-                return;
-            }
-
-            if (path.equals("/api/auth/register") || path.equals("/api/auth/login")) {
-                filterChain.doFilter(req, res);
-                return;
-            }
-
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                throw new InsufficientAuthenticationException("Missing or invalid Authorization header");
-            }
-
-            final String jwt = authHeader.substring(7);
-            final String email = jwtService.extractEmail(jwt);
-
-            if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserEntity userEntity = userRepository.findByEmail(email)
-                        .orElseThrow(() -> new BadCredentialsException(email));
-
-                if (jwtService.isTokenValid(jwt, userEntity)) {
-                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                            userEntity, null, userEntity.getAuthorities());
-
-                    SecurityContextHolder.getContext().setAuthentication(authToken);
-                }
-
-            }
-
-            filterChain.doFilter(req, res);
-        } catch (JwtException e) {
-            throw new JwtException(e.getMessage());
-        }
+        return path.startsWith("/api/auth")
+                || (path.equals("/api/property/") && method.equalsIgnoreCase("GET"))
+                || (matcher.match("/api/image/**", path) && method.equalsIgnoreCase("GET"));
     }
 
+    @Override
+    protected void doFilterInternal(
+            @NonNull HttpServletRequest req,
+            @NonNull HttpServletResponse res,
+            @NonNull FilterChain filterChain) throws ServletException, IOException {
+
+        String authHeader = req.getHeader("Authorization");
+
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            res.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Missing Authorization header");
+            return;
+        }
+
+        String jwt = authHeader.substring(7);
+
+        try {
+            String email = jwtService.extractEmail(jwt);
+
+            UserEntity user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new BadCredentialsException("Invalid token"));
+
+            if (!jwtService.isTokenValid(jwt, user)) {
+                res.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid token");
+                return;
+            }
+
+            UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(user, null,
+                    user.getAuthorities());
+
+            SecurityContextHolder.getContext().setAuthentication(auth);
+            filterChain.doFilter(req, res);
+
+        } catch (JwtException | BadCredentialsException e) {
+            res.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication failed");
+        }
+    }
 }

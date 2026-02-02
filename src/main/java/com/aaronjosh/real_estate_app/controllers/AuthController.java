@@ -89,18 +89,6 @@ public class AuthController {
         }
     }
 
-    @PostMapping("/verify")
-    public ResponseEntity<?> verifyAuth() {
-        try {
-            UserEntity user = userService.getUserEntity();
-
-            return ResponseEntity.ok().body(Map.of("success", true, "message", "Token is valid", "role", user.getRole(),
-                    "name", user.getFirstname() + user.getLastname(), "email", user.getEmail()));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-        }
-    }
-
     @PostMapping("/refresh")
     public ResponseEntity<?> generateAccessAndRefresh(@RequestBody String refreshToken) {
         try {

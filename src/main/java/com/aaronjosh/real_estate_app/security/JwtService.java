@@ -58,6 +58,7 @@ public class JwtService {
                 .claim("userId", user.getId())
                 .claim("email", user.getEmail())
                 .claim("role", user.getRole())
+                .claim("type", "access")
                 .issuedAt(new Date())
                 .expiration(new Date(expiration))
                 .signWith(getSigningKey())
@@ -108,16 +109,22 @@ public class JwtService {
         return extractClaim(token, claims -> Role.valueOf(claims.get("role", String.class)));
     }
 
-    /* Cheks if JWT token is expired. */
+    /* Checks if JWT token is expired. */
     public boolean isTokenExpired(String token) {
         return extractClaim(token, Claims::getExpiration).before(new Date());
+    }
+
+    // Checks if access token
+    public boolean isAccessToken(String token) {
+        return extractClaim(token, claims -> claims.get("type")).equals("access");
     }
 
     // Validates the token if belongs to user and not on the blacklisted
     public boolean isTokenValid(String token, UserEntity user) {
         final String email = extractEmail(token);
 
-        return (email.equals(user.getEmail()) && !isTokenExpired(token) && !isBlacklisted(token));
+        return (email.equals(user.getEmail()) && !isTokenExpired(token) && !isBlacklisted(token)
+                && isAccessToken(token));
     }
 
     /*
@@ -144,7 +151,7 @@ public class JwtService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid refresh token"));
 
         // Validates Refresh Token
-        if (isBlacklisted(refreshInfo.getTokenHash())) {
+        if (isBlacklisted(refreshInfo.getRefreshToken())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid refresh token");
         }
 
@@ -164,7 +171,7 @@ public class JwtService {
         String newRefreshToken = generateRefreshToken(user);
 
         // Updates new refresh token
-        refreshInfo.setTokenHash(newRefreshToken);
+        refreshInfo.setRefreshToken(newRefreshToken);
 
         return new TokenResponse(newAccessToken, newRefreshToken);
     }
