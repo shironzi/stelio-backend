@@ -4,6 +4,7 @@
 
 package com.aaronjosh.real_estate_app.security;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.function.Function;
 
@@ -11,13 +12,17 @@ import javax.crypto.SecretKey;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.aaronjosh.real_estate_app.dto.TokenResponse;
 import com.aaronjosh.real_estate_app.models.BlacklistedTokens;
+import com.aaronjosh.real_estate_app.models.RefreshTokensEntity;
 import com.aaronjosh.real_estate_app.models.UserEntity;
 import com.aaronjosh.real_estate_app.models.UserEntity.Role;
 import com.aaronjosh.real_estate_app.repositories.BlacklistedTokensRepo;
+import com.aaronjosh.real_estate_app.repositories.RefreshTokenRepo;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -27,6 +32,9 @@ import io.jsonwebtoken.security.Keys;
 public class JwtService {
     @Value("${jwt.secret}")
     private String jwtSecret;
+
+    @Autowired
+    private RefreshTokenRepo refreshTokenRepo;
 
     @Autowired
     private BlacklistedTokensRepo blacklistedTokensRepo;
@@ -41,7 +49,7 @@ public class JwtService {
      * - Includes claims: userId, email and role
      * - Token expires in 24 hours
      */
-    public String generateToken(UserEntity user) {
+    public String generateAccessToken(UserEntity user) {
         long currentTime = System.currentTimeMillis(); // current time
         long expiration = currentTime + (24 * 60 * 60 * 1000); // 24 hours
 
@@ -50,6 +58,19 @@ public class JwtService {
                 .claim("userId", user.getId())
                 .claim("email", user.getEmail())
                 .claim("role", user.getRole())
+                .issuedAt(new Date())
+                .expiration(new Date(expiration))
+                .signWith(getSigningKey())
+                .compact();
+    }
+
+    public String generateRefreshToken(UserEntity user) {
+        long currentTime = System.currentTimeMillis(); // current time
+        long expiration = currentTime + (5 * 24 * 60 * 60 * 1000); // 5 Days
+
+        return Jwts.builder()
+                .subject(user.getEmail())
+                .claim("type", "refresh")
                 .issuedAt(new Date())
                 .expiration(new Date(expiration))
                 .signWith(getSigningKey())
@@ -103,7 +124,6 @@ public class JwtService {
      * blacklisting token on logout
      */
     public void revokeToken(String token) {
-
         BlacklistedTokens revokedToken = new BlacklistedTokens();
         revokedToken.setToken(token);
 
@@ -115,10 +135,37 @@ public class JwtService {
     }
 
     public TokenResponse generateAccessAndRefreshToken(String refreshToken) {
-        TokenResponse newToken = new TokenResponse();
+        if (refreshToken == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid refresh token");
+        }
 
-        
+        // Gets refresh token
+        RefreshTokensEntity refreshInfo = refreshTokenRepo.findByRefreshToken(refreshToken)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid refresh token"));
 
-        return newToken;
+        // Validates Refresh Token
+        if (isBlacklisted(refreshInfo.getTokenHash())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid refresh token");
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        if (refreshInfo.getExpiresAt().isBefore(now)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid refresh token");
+        }
+
+        if (refreshInfo.getRevokedAt() != null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid refresh token");
+        }
+
+        UserEntity user = refreshInfo.getUser();
+
+        // Generates new Access and refresh token
+        String newAccessToken = generateAccessToken(user);
+        String newRefreshToken = generateRefreshToken(user);
+
+        // Updates new refresh token
+        refreshInfo.setTokenHash(newRefreshToken);
+
+        return new TokenResponse(newAccessToken, newRefreshToken);
     }
 }
