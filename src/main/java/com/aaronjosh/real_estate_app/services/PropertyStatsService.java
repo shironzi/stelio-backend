@@ -9,11 +9,11 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.aaronjosh.real_estate_app.dto.auth.UserDetails;
 import com.aaronjosh.real_estate_app.dto.booking.BookingCalendarResDto;
 import com.aaronjosh.real_estate_app.dto.booking.PropertyStatsResDto;
 import com.aaronjosh.real_estate_app.models.BookingEntity;
 import com.aaronjosh.real_estate_app.models.PropertyStats;
-import com.aaronjosh.real_estate_app.models.UserEntity;
 import com.aaronjosh.real_estate_app.models.BookingEntity.BookingStatus;
 import com.aaronjosh.real_estate_app.repositories.BookingRepo;
 import com.aaronjosh.real_estate_app.repositories.PropertyStatsRepo;
@@ -31,7 +31,7 @@ public class PropertyStatsService {
     private PropertyStatsRepo propertyStatsRepo;
 
     public PropertyStatsResDto dashboard(UUID propertyId) {
-        UserEntity user = userService.getUserEntity();
+        UserDetails user = userService.getUserDetails();
 
         PropertyStats propertyStats = propertyStatsRepo.findByProperty_id(Objects.requireNonNull(propertyId));
 

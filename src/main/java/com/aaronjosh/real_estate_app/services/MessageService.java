@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.aaronjosh.real_estate_app.dto.auth.UserDetails;
 import com.aaronjosh.real_estate_app.dto.booking.BookingReqDto;
 import com.aaronjosh.real_estate_app.dto.message.ChatHeadDto;
 import com.aaronjosh.real_estate_app.dto.message.MessageResDto;
@@ -46,7 +47,7 @@ public class MessageService {
     private LinkGenerator linkGenerator;
 
     public List<ChatHeadDto> getChatHeads() {
-        UserEntity user = userService.getUserEntity();
+        UserDetails user = userService.getUserDetails();
 
         List<ConversationEntity> conversations = conversationRepo.findConversationsByParticipantId(user.getId());
 

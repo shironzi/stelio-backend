@@ -10,6 +10,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.aaronjosh.real_estate_app.dto.auth.UserDetails;
 import com.aaronjosh.real_estate_app.models.UserEntity;
 
 import io.jsonwebtoken.JwtException;
@@ -59,8 +60,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
 
             if (SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = new UserDetails();
+
+                userDetails.setId(user.getId());
+                userDetails.setEmail(user.getEmail());
+                userDetails.setFirstname(user.getFirstname());
+                userDetails.setLastname(user.getLastname());
+                userDetails.setRole(user.getRole());
+
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        user, null, user.getAuthorities());
+                        userDetails, null, user.getAuthorities());
 
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }

@@ -18,9 +18,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.aaronjosh.real_estate_app.dto.auth.LoginReqDto;
 import com.aaronjosh.real_estate_app.dto.auth.LoginResDto;
 import com.aaronjosh.real_estate_app.dto.auth.RegisterReqDto;
+import com.aaronjosh.real_estate_app.dto.auth.UserDetails;
 import com.aaronjosh.real_estate_app.exceptions.EmailAlreadyExistsException;
 import com.aaronjosh.real_estate_app.exceptions.PasswordNotMatchException;
-import com.aaronjosh.real_estate_app.models.UserEntity;
 import com.aaronjosh.real_estate_app.services.AuthService;
 import com.aaronjosh.real_estate_app.services.UserService;
 
@@ -44,8 +44,12 @@ public class AuthController {
         try {
             LoginResDto res = authService.login(request.getEmail(), request.getPassword());
             return ResponseEntity
-                    .ok(Map.of("success", true, "message", "Login Successful", "token", res.getToken(), "name",
-                            res.getName(), "email", res.getEmail(), "role", res.getRole()));
+                    .ok(Map.of(
+                            "success", true,
+                            "message", "Login Successful",
+                            "token", res.getToken(), "name",
+                            res.getName(), "email", res.getEmail(),
+                            "role", res.getRole()));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", e.getMessage()));
         } catch (Exception e) {
@@ -82,9 +86,12 @@ public class AuthController {
     @PostMapping("/verify")
     public ResponseEntity<?> verifyAuth() {
         try {
-            UserEntity user = userService.getUserEntity();
+            UserDetails user = userService.getUserDetails();
 
-            return ResponseEntity.ok().body(Map.of("success", true, "message", "Token is valid", "role", user.getRole(),
+            return ResponseEntity.ok().body(Map.of(
+                    "success", true,
+                    "message", "Token is valid",
+                    "role", user.getRole(),
                     "name", user.getFirstname() + user.getLastname(), "email", user.getEmail()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());

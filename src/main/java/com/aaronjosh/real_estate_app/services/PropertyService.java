@@ -11,6 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
 
+import com.aaronjosh.real_estate_app.dto.auth.UserDetails;
 import com.aaronjosh.real_estate_app.dto.property.PropertyDto;
 import com.aaronjosh.real_estate_app.dto.property.PropertyResDto;
 import com.aaronjosh.real_estate_app.dto.property.UpdatePropertyDto;
@@ -54,7 +55,7 @@ public class PropertyService {
     // gets the owner properties
     @Transactional(readOnly = true)
     public List<PropertyResDto> getMyPropeties() {
-        UserEntity user = userService.getUserEntity();
+        UserDetails user = userService.getUserDetails();
         List<PropertyEntity> properties = propertyRepo.findByHostId(user.getId());
 
         return propertyMapper.toDto(properties);
@@ -70,7 +71,7 @@ public class PropertyService {
     }
 
     public PropertyEntity addProperty(PropertyDto propertyDto) {
-        UserEntity jwtUser = userService.getUserEntity();
+        UserDetails user = userService.getUserDetails();
 
         // creating new property object
         PropertyEntity property = new PropertyEntity();
@@ -103,10 +104,9 @@ public class PropertyService {
             }
         }
 
-        UserEntity userRef = userRepo.findById(Objects.requireNonNull(jwtUser.getId()))
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        property.setHost(userRef);
+        UserEntity userEntity = userRepo.findById(user.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "User not found"));
+        property.setHost(userEntity);
 
         PropertyStats stats = new PropertyStats();
         stats.setProperty(property);
@@ -117,7 +117,7 @@ public class PropertyService {
     }
 
     public PropertyEntity editProperty(UpdatePropertyDto propertyDto, UUID propertyId) {
-        UserEntity user = userService.getUserEntity();
+        UserDetails user = userService.getUserDetails();
 
         PropertyEntity property = propertyRepo.findById(Objects.requireNonNull(propertyId))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -151,7 +151,7 @@ public class PropertyService {
                         "Property not found"));
 
         UUID hostId = property.getHost().getId();
-        UUID userId = userService.getUserEntity().getId();
+        UUID userId = userService.getUserDetails().getId();
 
         if (!hostId.equals(userId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You don't have access to delete this property");

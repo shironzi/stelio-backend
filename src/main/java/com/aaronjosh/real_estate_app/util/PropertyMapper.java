@@ -9,15 +9,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import com.aaronjosh.real_estate_app.dto.auth.UserDetails;
 import com.aaronjosh.real_estate_app.dto.property.PropertyResDto;
 import com.aaronjosh.real_estate_app.models.PropertyEntity;
-import com.aaronjosh.real_estate_app.models.UserEntity;
+import com.aaronjosh.real_estate_app.repositories.FavoriteRepository;
 import com.aaronjosh.real_estate_app.services.UserService;
 
 @Component
 public class PropertyMapper {
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private FavoriteRepository favoriteRepository;
 
     public PropertyResDto toDto(PropertyEntity property) {
         // List of image links
@@ -53,12 +57,12 @@ public class PropertyMapper {
         dto.setImage(images);
 
         // Get the current user details
-        UserEntity user = userService.getUserEntity();
+        UserDetails user = userService.getUserDetails();
 
         if (user != null) {
             // Checks if the property is on user's favorites
-            boolean isFavorite = user.getFavorites().stream()
-                    .anyMatch(fav -> fav.getProperty().getId().equals(property.getId()));
+            boolean isFavorite = favoriteRepository.findByProperty_IdAndUser_Id(property.getId(), user.getId())
+                    .isPresent();
 
             // Sets the favorite status to dto
             dto.setIsFavorite(isFavorite);

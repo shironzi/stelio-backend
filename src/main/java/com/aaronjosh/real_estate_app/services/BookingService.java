@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.aaronjosh.real_estate_app.dto.booking.PropertyBookingResDto;
+import com.aaronjosh.real_estate_app.dto.auth.UserDetails;
 import com.aaronjosh.real_estate_app.dto.booking.BookingReqDto;
 import com.aaronjosh.real_estate_app.models.BookingEntity;
 import com.aaronjosh.real_estate_app.models.PropertyEntity;
@@ -21,6 +22,7 @@ import com.aaronjosh.real_estate_app.models.event.BookingRequestedEvent;
 import com.aaronjosh.real_estate_app.models.BookingEntity.BookingStatus;
 import com.aaronjosh.real_estate_app.repositories.BookingRepo;
 import com.aaronjosh.real_estate_app.repositories.PropertyRepository;
+import com.aaronjosh.real_estate_app.repositories.UserRepository;
 import com.aaronjosh.real_estate_app.services.listeners.BookingMessageListener;
 import com.aaronjosh.real_estate_app.util.DateTimeUtils;
 
@@ -36,6 +38,9 @@ public class BookingService {
     private BookingRepo bookingRepo;
 
     @Autowired
+    private UserRepository userRepo;
+
+    @Autowired
     private PropertyRepository propertyRepo;
 
     @Autowired
@@ -43,20 +48,20 @@ public class BookingService {
 
     // returns bookings from a user.
     public List<BookingEntity> getBookings() {
-        UserEntity user = userService.getUserEntity();
+        UserDetails user = userService.getUserDetails();
 
         return bookingRepo.findByUser_id(user.getId());
     }
 
     public List<BookingEntity> getPropertyBookings() {
-        UserEntity user = userService.getUserEntity();
+        UserDetails user = userService.getUserDetails();
 
         return bookingRepo.findByProperty_Host_Id(user.getId());
     }
 
     // returns booking info by ID.
     public BookingEntity getBookingById(UUID bookingId) {
-        UserEntity user = userService.getUserEntity();
+        UserDetails user = userService.getUserDetails();
 
         return bookingRepo.findById(Objects.requireNonNull(bookingId))
                 .filter(booking -> booking.getUser().getId().equals(user.getId()))
@@ -66,8 +71,7 @@ public class BookingService {
     @Transactional
     // Create booking request.
     public void requestBooking(UUID propertyId, BookingReqDto bookingInfo) {
-        // Renter details
-        UserEntity user = userService.getUserEntity();
+        UserDetails user = userService.getUserDetails();
 
         // Property details
         PropertyEntity property = propertyRepo.findById(Objects.requireNonNull(propertyId))
@@ -93,11 +97,14 @@ public class BookingService {
                     "The property is not available from " + startFormatted + " to " + endFormatted);
         }
 
+        UserEntity userEntity = userRepo.findById(user.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "User not found"));
+
         // Create booking entity
         BookingEntity booking = new BookingEntity();
         booking.setProperty(property);
         booking.setStatus(BookingStatus.PENDING);
-        booking.setUser(user);
+        booking.setUser(userEntity);
         booking.setStartDateTime(bookingInfo.getStart());
         booking.setEndDateTime(bookingInfo.getEnd());
         booking.setTotalGuests(bookingInfo.getTotalGuests());
@@ -113,7 +120,7 @@ public class BookingService {
         }
 
         bookingRepo.save(booking);
-        eventPublisher.handleBookingRequested(new BookingRequestedEvent(bookingInfo, user, property));
+        eventPublisher.handleBookingRequested(new BookingRequestedEvent(bookingInfo, userEntity, property));
     }
 
     // cancel booking from renters
@@ -130,7 +137,7 @@ public class BookingService {
         BookingEntity booking = bookingRepo.findById(Objects.requireNonNull(bookingId, "bookingId must not be null"))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Booking not found."));
 
-        UserEntity user = userService.getUserEntity();
+        UserDetails user = userService.getUserDetails();
         PropertyEntity property = booking.getProperty();
 
         // Check ownership
@@ -164,11 +171,11 @@ public class BookingService {
     public List<PropertyBookingResDto> getPropertyBookingsByPropertyId(UUID propertyId) {
 
         // checks the ownership of property
-        UserEntity owner = userService.getUserEntity();
+        UserDetails user = userService.getUserDetails();
         PropertyEntity property = propertyRepo.findById(propertyId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
-        if (!owner.getId().equals(property.getHost().getId())) {
+        if (!user.getId().equals(property.getHost().getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
