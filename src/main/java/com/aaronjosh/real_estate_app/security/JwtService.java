@@ -11,12 +11,15 @@ import javax.crypto.SecretKey;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.aaronjosh.real_estate_app.models.BlacklistedTokens;
 import com.aaronjosh.real_estate_app.models.UserEntity;
 import com.aaronjosh.real_estate_app.models.UserEntity.Role;
 import com.aaronjosh.real_estate_app.repositories.BlacklistedTokensRepo;
+import com.aaronjosh.real_estate_app.repositories.UserRepository;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -30,6 +33,9 @@ public class JwtService {
     @Autowired
     private BlacklistedTokensRepo blacklistedTokensRepo;
 
+    @Autowired
+    private UserRepository userRepo;
+
     private SecretKey getSigningKey() {
         byte[] keyBytes = jwtSecret.getBytes();
         return Keys.hmacShaKeyFor(keyBytes);
@@ -40,9 +46,9 @@ public class JwtService {
      * - Includes claims: userId, email and role
      * - Token expires in 24 hours
      */
-    public String generateToken(UserEntity user) {
+    public String generateAccessToken(UserEntity user) {
         long currentTime = System.currentTimeMillis(); // current time
-        long expiration = currentTime + (24 * 60 * 60 * 1000); // 24 hours
+        long expiration = currentTime + (24 * 60 * 60 * 1000); // Expires at 15 mins
 
         return Jwts.builder()
                 .subject(user.getEmail())
@@ -63,32 +69,18 @@ public class JwtService {
         return claimFunction.apply(claims);
     }
 
-    /*
-     * Extract email from Jwt token.
-     */
-    public String extractEmail(String token) {
-        return extractClaim(token, Claims::getSubject);
-    }
-
-    /*
-     * Extracts user id from Jwt token.
-     */
-
-    public Long extractUserId(String token) {
-        return extractClaim(token, claims -> claims.get("userId", Long.class));
-    }
-
-    /*
-     * Extracts role from Jwt token.
-     */
-
+    // Extracts role from token
     public Role extractRole(String token) {
         return extractClaim(token, claims -> Role.valueOf(claims.get("role", String.class)));
     }
 
-    /* Cheks if JWT token is expired. */
-    public boolean isTokenExpired(String token) {
-        return extractClaim(token, Claims::getExpiration).before(new Date());
+    // Extract user entity from token
+    public UserEntity getUserByToken(String token) {
+        String email = extractClaim(token, claims -> claims.getSubject());
+
+        UserEntity user = userRepo.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "User not found"));
+        return user;
     }
 
     /*
@@ -96,24 +88,20 @@ public class JwtService {
      * - Token must be belong to email.
      * - Token must not be expired.
      */
-    public boolean isTokenValid(String token, UserEntity user) {
-        final String email = extractEmail(token);
+    public boolean isAccessTokenValid(String token, UserEntity user) {
+        boolean isBlacklisted = blacklistedTokensRepo.findByToken(token).isPresent();
+        boolean isExpired = extractClaim(token, Claims::getExpiration).before(new Date());
 
-        return (email.equals(user.getEmail()) && !isTokenExpired(token));
+        return (!isExpired && !isBlacklisted);
     }
 
     /*
      * blacklisting token on logout
      */
     public void revokeToken(String token) {
-
         BlacklistedTokens revokedToken = new BlacklistedTokens();
         revokedToken.setToken(token);
 
         blacklistedTokensRepo.save(revokedToken);
-    }
-
-    public Boolean isBlacklisted(String token) {
-        return blacklistedTokensRepo.findByToken(token).isPresent();
     }
 }
