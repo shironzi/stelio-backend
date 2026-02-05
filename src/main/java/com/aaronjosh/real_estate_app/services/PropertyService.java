@@ -98,7 +98,7 @@ public class PropertyService {
                 file.setData(image.getBytes());
 
                 file.setPropertyEntity(property);
-                property.getImage().add(file);
+                property.getImages().add(file);
             } catch (java.io.IOException e) {
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to process image file", e);
             }

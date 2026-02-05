@@ -10,11 +10,12 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.aaronjosh.real_estate_app.dto.booking.PropertyBookingResDto;
 import com.aaronjosh.real_estate_app.dto.booking.UpdateBookingStatusReq;
 import com.aaronjosh.real_estate_app.dto.booking.BookingReqDto;
-import com.aaronjosh.real_estate_app.models.BookingEntity;
+import com.aaronjosh.real_estate_app.dto.booking.BookingResDto;
+import com.aaronjosh.real_estate_app.models.UserEntity.Role;
 import com.aaronjosh.real_estate_app.services.BookingService;
+import com.aaronjosh.real_estate_app.services.UserService;
 
 import jakarta.validation.Valid;
 
@@ -25,54 +26,44 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 @RestController
-@RequestMapping("/api/book")
+@RequestMapping("/api/bookings")
 public class BookingController {
 
     @Autowired
     private BookingService bookingService;
 
-    @PreAuthorize("RENTER")
-    @GetMapping("/renter/")
+    @Autowired
+    private UserService userService;
+
+    @GetMapping("/")
+    @PreAuthorize("hasAnyRole('RENTER','OWNER')")
     public ResponseEntity<?> getBookings() {
-        List<BookingEntity> bookings = bookingService.getBookings();
+        boolean isOwner = userService.getUserDetails().getRole().equals(Role.OWNER);
+
+        List<?> bookings = isOwner
+                ? bookingService.getPropertyBookings()
+                : bookingService.getBookings();
 
         return ResponseEntity.ok(Map.of("success", true, "booking", bookings));
-    }
-
-    @PreAuthorize("hasRole('OWNER')")
-    @GetMapping("/owner/")
-    public ResponseEntity<?> getPropertiesBookings() {
-        List<BookingEntity> bookings = bookingService.getPropertyBookings();
-
-        return ResponseEntity.ok(Map.of("success", true, "booking", bookings));
-    }
-
-    @PreAuthorize("hasRole('OWNER')")
-    @GetMapping("/owner/{propertyId}")
-    public ResponseEntity<?> getPropertyBookingsByPropertyId(@Valid @PathVariable UUID propertyId) {
-        List<PropertyBookingResDto> bookings = bookingService.getPropertyBookingsByPropertyId(propertyId);
-
-        return ResponseEntity
-                .ok(Map.of("success", true, "message", "successfully fetched the bookings", "bookings", bookings));
     }
 
     @GetMapping("/{bookingId}")
     public ResponseEntity<?> getBookingById(@Valid @PathVariable UUID bookingId) {
-        BookingEntity booking = bookingService.getBookingById(bookingId);
+        BookingResDto booking = bookingService.getBookingById(bookingId);
 
-        return ResponseEntity.ok(Map.of("success", true, "booking", booking));
+        return ResponseEntity.ok(Map.of("success", true, "bookings", booking));
     }
 
     @PreAuthorize("hasRole('RENTER')")
-    @PostMapping("/{bookingId}")
-    public ResponseEntity<?> requestBooking(@Valid @PathVariable UUID bookingId, @RequestBody BookingReqDto booking) {
-        bookingService.requestBooking(bookingId, booking);
+    @PostMapping("/{propertyId}")
+    public ResponseEntity<?> requestBooking(@Valid @PathVariable UUID propertyId, @RequestBody BookingReqDto booking) {
+        bookingService.requestBooking(propertyId, booking);
 
         return ResponseEntity.ok(Map.of("success", true, "message", "Successfully requested to book a property."));
     }
 
     @PreAuthorize("hasRole('OWNER')")
-    @PatchMapping("/{bookingId}/status")
+    @PatchMapping("/{bookingId}")
     public ResponseEntity<?> updateBookingStatus(@Valid @PathVariable UUID bookingId,
             @RequestBody UpdateBookingStatusReq status) {
         bookingService.updateBookingStatus(bookingId, status.status());

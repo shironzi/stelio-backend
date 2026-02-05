@@ -6,6 +6,7 @@ import java.util.UUID;
 import java.util.Objects;
 import java.math.BigDecimal;
 import java.time.temporal.ChronoUnit;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -15,6 +16,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.aaronjosh.real_estate_app.dto.booking.PropertyBookingResDto;
 import com.aaronjosh.real_estate_app.dto.auth.UserDetails;
 import com.aaronjosh.real_estate_app.dto.booking.BookingReqDto;
+import com.aaronjosh.real_estate_app.dto.booking.BookingResDto;
 import com.aaronjosh.real_estate_app.models.BookingEntity;
 import com.aaronjosh.real_estate_app.models.PropertyEntity;
 import com.aaronjosh.real_estate_app.models.UserEntity;
@@ -25,6 +27,7 @@ import com.aaronjosh.real_estate_app.repositories.PropertyRepository;
 import com.aaronjosh.real_estate_app.repositories.UserRepository;
 import com.aaronjosh.real_estate_app.services.listeners.BookingMessageListener;
 import com.aaronjosh.real_estate_app.util.DateTimeUtils;
+import com.aaronjosh.real_estate_app.util.LinkGenerator;
 
 import jakarta.transaction.Transactional;
 
@@ -46,11 +49,49 @@ public class BookingService {
     @Autowired
     private BookingMessageListener eventPublisher;
 
+    @Autowired
+    private LinkGenerator linkGenerator;
+
     // returns bookings from a user.
-    public List<BookingEntity> getBookings() {
+    public List<BookingResDto> getBookings() {
         UserDetails user = userService.getUserDetails();
 
-        return bookingRepo.findByUser_id(user.getId());
+        List<BookingResDto> bookings = bookingRepo.findByUser_id(user.getId()).stream().map(
+                (booking) -> {
+                    BookingResDto dto = new BookingResDto();
+
+                    // Booking fields
+                    dto.setId(booking.getId());
+                    dto.setPaymentStatus(booking.getPaymentStatus().toString());
+                    dto.setStartDateTime(booking.getStartDateTime());
+                    dto.setEndDateTime(booking.getEndDateTime());
+                    dto.setSpecialRequest(booking.getSpecialRequest().toString());
+                    dto.setGuestNames(booking.getGuestNames());
+                    dto.setTotalGuests(booking.getTotalGuests());
+                    dto.setContactPhone(booking.getContactPhone());
+                    dto.setStatus(booking.getStatus().toString());
+
+                    // Property fields
+                    dto.setPropertyId(booking.getProperty().getId());
+                    dto.setTitle(booking.getProperty().getTitle());
+                    dto.setDescription(booking.getProperty().getDescription());
+                    dto.setPrice(booking.getProperty().getPrice());
+                    dto.setPropertyType(booking.getProperty().getPropertyType().toString());
+                    dto.setMaxGuest(booking.getProperty().getMaxGuest());
+                    dto.setTotalBedroom(booking.getProperty().getTotalBedroom());
+                    dto.setTotalBed(booking.getProperty().getTotalBed());
+                    dto.setTotalBath(booking.getProperty().getTotalBath());
+                    dto.setAddress(booking.getProperty().getAddress());
+                    dto.setCity(booking.getProperty().getCity());
+
+                    dto.setImages(booking.getProperty().getImages().stream()
+                            .map(image -> linkGenerator.generateLink(image))
+                            .collect(Collectors.toList()));
+
+                    return dto;
+                }).toList();
+
+        return bookings;
     }
 
     public List<BookingEntity> getPropertyBookings() {
@@ -60,12 +101,37 @@ public class BookingService {
     }
 
     // returns booking info by ID.
-    public BookingEntity getBookingById(UUID bookingId) {
-        UserDetails user = userService.getUserDetails();
-
-        return bookingRepo.findById(Objects.requireNonNull(bookingId))
-                .filter(booking -> booking.getUser().getId().equals(user.getId()))
+    public BookingResDto getBookingById(UUID bookingId) {
+        BookingEntity booking = bookingRepo.findById(bookingId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Booking not found"));
+
+        BookingResDto dto = new BookingResDto();
+
+        // Booking fields
+        dto.setId(booking.getId());
+        dto.setPaymentStatus(booking.getPaymentStatus().toString());
+        dto.setStartDateTime(booking.getStartDateTime());
+        dto.setEndDateTime(booking.getEndDateTime());
+        dto.setSpecialRequest(booking.getSpecialRequest().toString());
+        dto.setGuestNames(booking.getGuestNames());
+        dto.setTotalGuests(booking.getTotalGuests());
+        dto.setContactPhone(booking.getContactPhone());
+        dto.setStatus(booking.getStatus().toString());
+
+        // Property fields
+        dto.setPropertyId(booking.getProperty().getId());
+        dto.setTitle(booking.getProperty().getTitle());
+        dto.setDescription(booking.getProperty().getDescription());
+        dto.setPrice(booking.getProperty().getPrice());
+        dto.setPropertyType(booking.getProperty().getPropertyType().toString());
+        dto.setMaxGuest(booking.getProperty().getMaxGuest());
+        dto.setTotalBedroom(booking.getProperty().getTotalBedroom());
+        dto.setTotalBed(booking.getProperty().getTotalBed());
+        dto.setTotalBath(booking.getProperty().getTotalBath());
+        dto.setAddress(booking.getProperty().getAddress());
+        dto.setCity(booking.getProperty().getCity());
+
+        return dto;
     }
 
     @Transactional

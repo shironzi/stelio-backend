@@ -17,30 +17,34 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import com.aaronjosh.real_estate_app.dto.booking.PropertyBookingResDto;
 import com.aaronjosh.real_estate_app.dto.property.PropertyDto;
 import com.aaronjosh.real_estate_app.dto.property.PropertyResDto;
 import com.aaronjosh.real_estate_app.dto.property.UpdatePropertyDto;
+import com.aaronjosh.real_estate_app.models.UserEntity.Role;
+import com.aaronjosh.real_estate_app.services.BookingService;
 import com.aaronjosh.real_estate_app.services.PropertyService;
+import com.aaronjosh.real_estate_app.services.UserService;
 
 import jakarta.validation.Valid;
 
 @Controller
-@RequestMapping("/api/property")
+@RequestMapping("/api/properties")
 public class PropertyController {
 
     @Autowired
     private PropertyService propertyService;
 
+    @Autowired
+    private BookingService bookingService;
+
+    @Autowired
+    private UserService userService;
+
     @GetMapping("/")
     public ResponseEntity<?> getProperties() {
-        List<PropertyResDto> properties = propertyService.getProperties();
-
-        return ResponseEntity.ok(Map.of("success", true, "properties", properties));
-    }
-
-    @GetMapping("/my-properties")
-    public ResponseEntity<?> getMyProperties() {
-        List<PropertyResDto> properties = propertyService.getMyPropeties();
+        boolean isOwner = userService.getUserDetails().getRole().equals(Role.OWNER);
+        List<PropertyResDto> properties = isOwner ? propertyService.getMyPropeties() : propertyService.getProperties();
 
         return ResponseEntity.ok(Map.of("success", true, "properties", properties));
     }
@@ -50,6 +54,15 @@ public class PropertyController {
         PropertyResDto property = propertyService.getPropertyById(propertyId);
 
         return ResponseEntity.ok(Map.of("success", true, "property", property));
+    }
+
+    @PreAuthorize("hasRole('OWNER')")
+    @GetMapping("/{propertyId}/bookings")
+    public ResponseEntity<?> getPropertyBookings(@Valid @PathVariable UUID propertyId) {
+        List<PropertyBookingResDto> bookings = bookingService.getPropertyBookingsByPropertyId(propertyId);
+
+        return ResponseEntity
+                .ok(Map.of("success", true, "message", "successfully fetched the bookings", "bookings", bookings));
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -76,5 +89,4 @@ public class PropertyController {
 
         return ResponseEntity.ok(Map.of("success", true, "message", "Property Deleted Successfully"));
     }
-
 }

@@ -29,7 +29,7 @@ public class PropertyMapper {
 
         // Generate url for each image
 
-        property.getImage().forEach(image -> {
+        property.getImages().forEach(image -> {
             String imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
                     .path("/api/image/")
                     .path(Objects.requireNonNull(image.getId().toString()))
