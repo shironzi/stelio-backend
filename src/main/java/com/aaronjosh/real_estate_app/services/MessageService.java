@@ -90,6 +90,9 @@ public class MessageService {
     }
 
     public void sendMessageByConversationId(UUID conversationId, SendMessageDto messageInfo) {
+        if (conversationId == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Conversation ID cannot be null");
+        }
 
         ConversationEntity conversation = conversationRepo.findById(conversationId)
                 .orElseThrow(() -> new ResponseStatusException(

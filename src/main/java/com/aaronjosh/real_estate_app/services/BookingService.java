@@ -29,6 +29,7 @@ import com.aaronjosh.real_estate_app.services.listeners.BookingMessageListener;
 import com.aaronjosh.real_estate_app.util.DateTimeUtils;
 import com.aaronjosh.real_estate_app.util.LinkGenerator;
 
+import io.micrometer.common.lang.NonNullFields;
 import jakarta.transaction.Transactional;
 
 @Service
@@ -65,7 +66,6 @@ public class BookingService {
                     dto.setPaymentStatus(booking.getPaymentStatus().toString());
                     dto.setStartDateTime(booking.getStartDateTime());
                     dto.setEndDateTime(booking.getEndDateTime());
-                    dto.setSpecialRequest(booking.getSpecialRequest().toString());
                     dto.setGuestNames(booking.getGuestNames());
                     dto.setTotalGuests(booking.getTotalGuests());
                     dto.setContactPhone(booking.getContactPhone());
@@ -112,7 +112,6 @@ public class BookingService {
         dto.setPaymentStatus(booking.getPaymentStatus().toString());
         dto.setStartDateTime(booking.getStartDateTime());
         dto.setEndDateTime(booking.getEndDateTime());
-        dto.setSpecialRequest(booking.getSpecialRequest().toString());
         dto.setGuestNames(booking.getGuestNames());
         dto.setTotalGuests(booking.getTotalGuests());
         dto.setContactPhone(booking.getContactPhone());
@@ -175,11 +174,6 @@ public class BookingService {
         booking.setEndDateTime(bookingInfo.getEnd());
         booking.setTotalGuests(bookingInfo.getTotalGuests());
         booking.setContactPhone(bookingInfo.getContactPhone());
-
-        // Checks special requests
-        if (bookingInfo.getSpecialRequest() != null) {
-            booking.setSpecialRequest(bookingInfo.getSpecialRequest());
-        }
 
         if (bookingInfo.getGuestNames() != null) {
             booking.setGuestNames(bookingInfo.getGuestNames());
@@ -265,7 +259,6 @@ public class BookingService {
             dto.setTotalPrice(BigDecimal.valueOf(totalNights).multiply(property.getPrice()));
             dto.setStatus(booking.getStatus());
             dto.setTotalGuest(booking.getTotalGuests());
-            dto.setSpecialRequest(booking.getSpecialRequest());
 
             dtos.add(dto);
         }

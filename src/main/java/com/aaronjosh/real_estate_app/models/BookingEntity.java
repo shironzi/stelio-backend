@@ -37,13 +37,6 @@ public class BookingEntity {
         PAID
     }
 
-    public enum SpecialRequest {
-        LATECHECKIN,
-        PARKING,
-        BABYCRIB,
-        NONE
-    }
-
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
@@ -54,7 +47,6 @@ public class BookingEntity {
     private LocalDateTime endDateTime;
 
     @Enumerated(EnumType.STRING)
-    private SpecialRequest specialRequest = SpecialRequest.NONE;
     private List<String> guestNames;
     private Integer totalGuests;
     private String contactPhone;

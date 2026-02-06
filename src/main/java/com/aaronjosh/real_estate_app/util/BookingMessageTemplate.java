@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component;
 
 import com.aaronjosh.real_estate_app.dto.booking.BookingReqDto;
 import com.aaronjosh.real_estate_app.models.PropertyEntity;
-import com.aaronjosh.real_estate_app.models.BookingEntity.SpecialRequest;
 
 @Component
 public class BookingMessageTemplate {
@@ -22,11 +21,6 @@ public class BookingMessageTemplate {
         long totalDays = ChronoUnit.DAYS.between(start, end);
         int totalNights = (int) totalDays;
 
-        // Handle optional fields
-        String specialRequests = bookingInfo.getSpecialRequest() == SpecialRequest.NONE
-                ? bookingInfo.getSpecialRequest().toString().toLowerCase()
-                : "None";
-
         return "Hello " + ownerName + "\n" +
                 "🏠 Property\n" +
                 property.getTitle() + "\n\n" +
@@ -39,7 +33,6 @@ public class BookingMessageTemplate {
                 "Contact Phone: " + bookingInfo.getContactPhone() + "\n" +
                 "Guest Names: " + bookingInfo.getGuestNames() + "\n\n" +
                 "📝 Special Requests\n" +
-                specialRequests + "\n\n" +
                 "💳 Payment Status\n" +
                 "Pending";
     }

@@ -6,7 +6,6 @@ import java.util.UUID;
 
 import com.aaronjosh.real_estate_app.models.BookingEntity.BookingStatus;
 import com.aaronjosh.real_estate_app.models.BookingEntity.PaymentStatus;
-import com.aaronjosh.real_estate_app.models.BookingEntity.SpecialRequest;
 
 import lombok.Data;
 
@@ -22,5 +21,4 @@ public class PropertyBookingResDto {
     private BigDecimal totalPrice;
     private BookingStatus status;
     private Integer totalGuest;
-    private SpecialRequest specialRequest;
 }
