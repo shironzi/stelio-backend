@@ -44,7 +44,7 @@ public class BookingController {
                 ? bookingService.getPropertyBookings()
                 : bookingService.getBookings();
 
-        return ResponseEntity.ok(Map.of("success", true, "booking", bookings));
+        return ResponseEntity.ok(Map.of("success", true, "bookings", bookings));
     }
 
     @GetMapping("/{bookingId}")

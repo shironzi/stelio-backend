@@ -41,12 +41,10 @@ public class BookingEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Enumerated(EnumType.STRING)
     private PaymentStatus paymentStatus = PaymentStatus.PENDING;
     private LocalDateTime startDateTime;
     private LocalDateTime endDateTime;
 
-    @Enumerated(EnumType.STRING)
     private List<String> guestNames;
     private Integer totalGuests;
     private String contactPhone;
