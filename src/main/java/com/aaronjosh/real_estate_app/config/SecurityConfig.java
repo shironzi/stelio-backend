@@ -42,12 +42,12 @@ public class SecurityConfig {
                                 // Setting the authorization on routes
                                 .authorizeHttpRequests(authorize -> authorize
                                                 .requestMatchers("/api/auth/login", "/api/auth/register").anonymous()
-                                                .requestMatchers(HttpMethod.POST, "/api/property", "/api/property/**")
+                                                .requestMatchers(HttpMethod.POST, "/api/properties", "/api/properties/**")
                                                 .hasRole("OWNER")
-                                                .requestMatchers(HttpMethod.DELETE, "/api/property/**").hasRole("OWNER")
-                                                .requestMatchers(HttpMethod.GET, "/api/property/my-properties")
+                                                .requestMatchers(HttpMethod.DELETE, "/api/properties/**").hasRole("OWNER")
+                                                .requestMatchers(HttpMethod.GET, "/api/properties/my-properties")
                                                 .hasRole("OWNER")
-                                                .requestMatchers(HttpMethod.GET, "/api/property/", "/api/image/**")
+                                                .requestMatchers(HttpMethod.GET, "/api/properties/", "/api/image/**")
                                                 .permitAll()
                                                 .anyRequest().authenticated())
 

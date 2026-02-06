@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import com.aaronjosh.real_estate_app.dto.auth.UserDetails;
 import com.aaronjosh.real_estate_app.dto.booking.PropertyBookingResDto;
 import com.aaronjosh.real_estate_app.dto.property.PropertyDto;
 import com.aaronjosh.real_estate_app.dto.property.PropertyResDto;
@@ -43,7 +44,14 @@ public class PropertyController {
 
     @GetMapping("/")
     public ResponseEntity<?> getProperties() {
-        boolean isOwner = userService.getUserDetails().getRole().equals(Role.OWNER);
+        boolean isOwner = false;
+
+        // Checks if user is unauthenticated
+        UserDetails user = userService.getUserDetails();
+        if (user != null) {
+            isOwner = user.getRole().equals(Role.OWNER);
+        }
+
         List<PropertyResDto> properties = isOwner ? propertyService.getMyPropeties() : propertyService.getProperties();
 
         return ResponseEntity.ok(Map.of("success", true, "properties", properties));

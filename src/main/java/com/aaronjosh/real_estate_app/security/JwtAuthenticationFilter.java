@@ -33,7 +33,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         final String authHeader = req.getHeader("Authorization");
 
-        return (authHeader == null && (path.equals("/api/property/") && method.equalsIgnoreCase("GET"))
+        return (authHeader == null && (path.equals("/api/properties/") && method.equalsIgnoreCase("GET"))
                 || (path.startsWith("/api/image/") && method.equalsIgnoreCase("GET"))
                 || path.equals("/api/auth/register") || path.equals("/api/auth/login"));
     }
