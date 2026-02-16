@@ -218,6 +218,7 @@ public class BookingService {
         List<BookingEntity> existingBookings = bookingRepo.findOverlappingBookings(property.getId(),
                 booking.getEndDateTime(), booking.getStartDateTime());
 
+        // allows rejecting of bookings
         if (!existingBookings.isEmpty() && status.equals(BookingStatus.APPROVED)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "There was already a scheduled");
         }
