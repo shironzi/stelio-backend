@@ -29,7 +29,6 @@ import com.aaronjosh.real_estate_app.services.listeners.BookingMessageListener;
 import com.aaronjosh.real_estate_app.util.DateTimeUtils;
 import com.aaronjosh.real_estate_app.util.LinkGenerator;
 
-import io.micrometer.common.lang.NonNullFields;
 import jakarta.transaction.Transactional;
 
 @Service
@@ -219,7 +218,7 @@ public class BookingService {
         List<BookingEntity> existingBookings = bookingRepo.findOverlappingBookings(property.getId(),
                 booking.getEndDateTime(), booking.getStartDateTime());
 
-        if (!existingBookings.isEmpty()) {
+        if (!existingBookings.isEmpty() && status.equals(BookingStatus.APPROVED)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "There was already a scheduled");
         }
 

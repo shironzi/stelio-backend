@@ -16,7 +16,7 @@ import com.aaronjosh.real_estate_app.dto.booking.PropertyStatsResDto;
 import com.aaronjosh.real_estate_app.services.PropertyStatsService;
 
 @Controller
-@RequestMapping("/api/property/stats")
+@RequestMapping("/api/properties/stats")
 public class PropertyStatsController {
 
     @Autowired

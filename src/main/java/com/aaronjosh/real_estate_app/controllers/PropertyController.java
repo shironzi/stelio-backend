@@ -17,15 +17,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import com.aaronjosh.real_estate_app.dto.auth.UserDetails;
 import com.aaronjosh.real_estate_app.dto.booking.PropertyBookingResDto;
 import com.aaronjosh.real_estate_app.dto.property.PropertyDto;
 import com.aaronjosh.real_estate_app.dto.property.PropertyResDto;
 import com.aaronjosh.real_estate_app.dto.property.UpdatePropertyDto;
-import com.aaronjosh.real_estate_app.models.UserEntity.Role;
 import com.aaronjosh.real_estate_app.services.BookingService;
 import com.aaronjosh.real_estate_app.services.PropertyService;
-import com.aaronjosh.real_estate_app.services.UserService;
 
 import jakarta.validation.Valid;
 
@@ -39,20 +36,16 @@ public class PropertyController {
     @Autowired
     private BookingService bookingService;
 
-    @Autowired
-    private UserService userService;
-
     @GetMapping("/")
     public ResponseEntity<?> getProperties() {
-        boolean isOwner = false;
+        List<PropertyResDto> properties = propertyService.getProperties();
 
-        // Checks if user is unauthenticated
-        UserDetails user = userService.getUserDetails();
-        if (user != null) {
-            isOwner = user.getRole().equals(Role.OWNER);
-        }
+        return ResponseEntity.ok(Map.of("success", true, "properties", properties));
+    }
 
-        List<PropertyResDto> properties = isOwner ? propertyService.getMyPropeties() : propertyService.getProperties();
+    @GetMapping("/my-properties")
+    public ResponseEntity<?> getMyproperties() {
+        List<PropertyResDto> properties = propertyService.getMyPropeties();
 
         return ResponseEntity.ok(Map.of("success", true, "properties", properties));
     }

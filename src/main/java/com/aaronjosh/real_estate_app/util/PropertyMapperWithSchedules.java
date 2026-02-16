@@ -15,8 +15,6 @@ public class PropertyMapperWithSchedules extends PropertyMapper {
         // reusing the logic from toDto
         PropertyResDto dto = super.toDto(property);
 
-        System.out.println(property.getBookings());
-
         // Filter only APPROVED bookings and converts bookings into DateRange objects
         dto.setBookings(property.getBookings().stream()
                 .filter(booking -> booking.getStatus().equals(BookingStatus.APPROVED))
