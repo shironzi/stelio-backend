@@ -26,6 +26,5 @@ public class PropertyResDto {
     private PropertyStatus status;
     private List<String> image;
     private Boolean isFavorite;
-    private List<LocalDateTime> bookingStartDateTime;
-    private List<LocalDateTime> bookingEndDateTime;
+    private List<DateRange> bookings;
 }

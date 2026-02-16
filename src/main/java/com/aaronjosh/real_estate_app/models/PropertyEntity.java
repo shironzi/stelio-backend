@@ -16,7 +16,7 @@ import lombok.ToString;
 @Entity
 @Data
 @Table(name = "property")
-@ToString(exclude = { "favorites", "bookings", "stats", "reviews", "image" })
+@ToString(exclude = { "favorites", "bookings", "stats", "reviews", "images" })
 public class PropertyEntity {
     public enum PropertyType {
         APARTMENT,
@@ -92,7 +92,8 @@ public class PropertyEntity {
     @OneToMany(mappedBy = "property", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<FavoriteEntity> favorites = new ArrayList<>();
 
-    @OneToMany(mappedBy = "property", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "property", cascade = { CascadeType.PERSIST,
+            CascadeType.REMOVE }, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<BookingEntity> bookings = new ArrayList<>();
 
     @OneToOne(mappedBy = "property", cascade = CascadeType.PERSIST, orphanRemoval = true, fetch = FetchType.LAZY)
