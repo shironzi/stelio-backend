@@ -15,17 +15,10 @@ public class LinkGenerator {
             throw new IllegalArgumentException("FileEntity cannot be null");
         }
 
-        String fileType = Objects.requireNonNull(file.getType(), "File type cannot be null");
         String fileId = Objects.requireNonNull(file.getId(), "File ID cannot be null").toString();
 
-        if (fileType.equalsIgnoreCase("jpg") || fileType.equalsIgnoreCase("jpeg") || fileType.equalsIgnoreCase("png")) {
-            fileType = "image";
-        }
-
         return ServletUriComponentsBuilder.fromCurrentContextPath()
-                .path("/api/")
-                .path(fileType)
-                .path("/")
+                .path("/api/image/")
                 .path(fileId)
                 .encode()
                 .toUriString();
