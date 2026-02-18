@@ -28,7 +28,6 @@ public class PropertyEntity {
     public enum PropertyStatus {
         ACTIVE,
         INACTIVE,
-        PENDING
     }
 
     @Id

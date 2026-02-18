@@ -24,17 +24,19 @@ import lombok.Data;
 @Table(name = "bookings")
 public class BookingEntity {
     public enum BookingStatus {
-        CANCELLED,
-        PENDING,
-        APPROVED,
-        REJECTED,
-        NOSHOW,
-        COMPLETED
+        CANCELLED, // User or system cancelled
+        PENDING_PAYMENT, // Reservation created, awaiting full payment
+        PENDING_APPROVAL, // Request-to-book submitted, awaiting host approval
+        CONFIRMED, // Payment completed or host approved
+        REJECTED, // Host rejected request
+        NOSHOW, // Guest didn’t arrive
+        COMPLETED // Stay completed
     }
 
     public enum PaymentStatus {
-        PENDING,
-        PAID
+        PENDING, // Payment not yet made
+        PAID, // Full payment completed
+        PARTIAL // Partial payment made (e.g., 30% reservation)
     }
 
     @Id
@@ -65,7 +67,7 @@ public class BookingEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private BookingStatus status = BookingStatus.PENDING;
+    private BookingStatus status = BookingStatus.PENDING_APPROVAL;
 
     @PrePersist
     protected void onCreate() {

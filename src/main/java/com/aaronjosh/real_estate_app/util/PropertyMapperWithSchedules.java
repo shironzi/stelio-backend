@@ -17,7 +17,7 @@ public class PropertyMapperWithSchedules extends PropertyMapper {
 
         // Filter only APPROVED bookings and converts bookings into DateRange objects
         dto.setBookings(property.getBookings().stream()
-                .filter(booking -> booking.getStatus().equals(BookingStatus.APPROVED))
+                .filter(booking -> booking.getStatus().equals(BookingStatus.CONFIRMED))
                 .map(booking -> new DateRange(booking.getStartDateTime(),
                         booking.getEndDateTime()))
                 .toList());

@@ -133,7 +133,7 @@ public class BookingService {
     }
 
     @Transactional
-    // Create booking request.
+    // Requesting for booking a property with a Pending for approval
     public void requestBooking(UUID propertyId, BookingReqDto bookingInfo) {
         UserDetails user = userService.getUserDetails();
 
@@ -142,7 +142,8 @@ public class BookingService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "property not found"));
 
         // Checks pending booking
-        boolean hasActiveBooking = bookingRepo.existsByUser_IdAndStatus(user.getId(), BookingStatus.PENDING);
+        boolean hasActiveBooking = bookingRepo.existsByUser_IdAndStatus(user.getId(), BookingStatus.PENDING_APPROVAL)
+                || bookingRepo.existsByUser_IdAndStatus(user.getId(), BookingStatus.PENDING_PAYMENT);
 
         if (hasActiveBooking) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "You already have a pending booking.");
@@ -167,7 +168,7 @@ public class BookingService {
         // Create booking entity
         BookingEntity booking = new BookingEntity();
         booking.setProperty(property);
-        booking.setStatus(BookingStatus.PENDING);
+        booking.setStatus(BookingStatus.PENDING_APPROVAL);
         booking.setUser(userEntity);
         booking.setStartDateTime(bookingInfo.getStart());
         booking.setEndDateTime(bookingInfo.getEnd());
@@ -205,7 +206,8 @@ public class BookingService {
         }
 
         // Allow only pending bookings to be updated
-        if (booking.getStatus() != BookingStatus.PENDING) {
+        if (booking.getStatus() != BookingStatus.PENDING_APPROVAL
+                || booking.getStatus() != BookingStatus.PENDING_PAYMENT) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only pending bookings can be updated");
         }
 
@@ -219,7 +221,7 @@ public class BookingService {
                 booking.getEndDateTime(), booking.getStartDateTime());
 
         // allows rejecting of bookings
-        if (!existingBookings.isEmpty() && status.equals(BookingStatus.APPROVED)) {
+        if (!existingBookings.isEmpty() && status.equals(BookingStatus.CONFIRMED)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "There was already a scheduled");
         }
 
