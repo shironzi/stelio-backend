@@ -28,23 +28,43 @@ public class PaymentService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Booking already paid");
         }
 
+        System.out.println(payment.getAmount());
+
+        if (payment.getAmount() == null ||
+                payment.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Payment amount must be greater than 0");
+        }
+
+        if (payment.getAmount().compareTo(booking.getBalance()) > 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Payment exceeds remaining balance");
+        }
+
         BigDecimal rentPrice = booking.getProperty().getPrice();
-        BigDecimal partialPayment = rentPrice.multiply(BigDecimal.valueOf(0.3));
 
-        if (payment.getAmount().compareTo(partialPayment) < 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Partial payment must be at least 30% of rent price");
+        // Apply 30% rule only on first payment
+        if (booking.getPaymentStatus() == PaymentStatus.PENDING) {
+            BigDecimal minPartial = rentPrice.multiply(BigDecimal.valueOf(0.3));
+            if (payment.getAmount().compareTo(minPartial) < 0) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Initial payment must be at least 30%");
+            }
         }
 
-        BookingStatus bookingStatus = BookingStatus.PENDING_APPROVAL;
-        PaymentStatus paymentStatus = PaymentStatus.PARTIAL;
+        BigDecimal newBalance = booking.getBalance().subtract(payment.getAmount());
+        booking.setBalance(newBalance);
 
-        if (payment.getAmount().compareTo(rentPrice) == 0) {
-            bookingStatus = BookingStatus.CONFIRMED;
-            paymentStatus = PaymentStatus.PAID;
+        if (newBalance.compareTo(BigDecimal.ZERO) == 0) {
+            booking.setStatus(BookingStatus.CONFIRMED);
+            booking.setPaymentStatus(PaymentStatus.PAID);
+        } else {
+            booking.setStatus(BookingStatus.PENDING_PAYMENT);
+            booking.setPaymentStatus(PaymentStatus.PARTIAL);
         }
-        booking.setStatus(bookingStatus);
-        booking.setPaymentStatus(paymentStatus);
 
         bookingRepo.save(booking);
     }
