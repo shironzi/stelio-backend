@@ -93,10 +93,42 @@ public class BookingService {
         return bookings;
     }
 
-    public List<BookingEntity> getPropertyBookings() {
+    public List<BookingResDto> getPropertyBookings() {
         UserDetails user = userService.getUserDetails();
 
-        return bookingRepo.findByProperty_Host_Id(user.getId());
+        return bookingRepo.findByProperty_Host_Id(user.getId()).stream().map(
+                (booking) -> {
+                    BookingResDto dto = new BookingResDto();
+
+                    // Booking fields
+                    dto.setId(booking.getId());
+                    dto.setPaymentStatus(booking.getPaymentStatus().toString());
+                    dto.setStartDateTime(booking.getStartDateTime());
+                    dto.setEndDateTime(booking.getEndDateTime());
+                    dto.setGuestNames(booking.getGuestNames());
+                    dto.setTotalGuests(booking.getTotalGuests());
+                    dto.setContactPhone(booking.getContactPhone());
+                    dto.setStatus(booking.getStatus().toString());
+
+                    // Property fields
+                    dto.setPropertyId(booking.getProperty().getId());
+                    dto.setTitle(booking.getProperty().getTitle());
+                    dto.setDescription(booking.getProperty().getDescription());
+                    dto.setPrice(booking.getProperty().getPrice());
+                    dto.setPropertyType(booking.getProperty().getPropertyType().toString());
+                    dto.setMaxGuest(booking.getProperty().getMaxGuest());
+                    dto.setTotalBedroom(booking.getProperty().getTotalBedroom());
+                    dto.setTotalBed(booking.getProperty().getTotalBed());
+                    dto.setTotalBath(booking.getProperty().getTotalBath());
+                    dto.setAddress(booking.getProperty().getAddress());
+                    dto.setCity(booking.getProperty().getCity());
+
+                    dto.setImages(booking.getProperty().getImages().stream()
+                            .map(image -> linkGenerator.generateLink(image))
+                            .collect(Collectors.toList()));
+
+                    return dto;
+                }).toList();
     }
 
     // returns booking info by ID.
@@ -174,6 +206,7 @@ public class BookingService {
         booking.setEndDateTime(bookingInfo.getEnd());
         booking.setTotalGuests(bookingInfo.getTotalGuests());
         booking.setContactPhone(bookingInfo.getContactPhone());
+        booking.setStatus(BookingStatus.PENDING_APPROVAL);
 
         if (bookingInfo.getGuestNames() != null) {
             booking.setGuestNames(bookingInfo.getGuestNames());

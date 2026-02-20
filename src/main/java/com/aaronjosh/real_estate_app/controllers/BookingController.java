@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -40,7 +41,7 @@ public class BookingController {
     public ResponseEntity<?> getBookings() {
         boolean isOwner = userService.getUserDetails().getRole().equals(Role.OWNER);
 
-        List<?> bookings = isOwner
+        List<BookingResDto> bookings = isOwner
                 ? bookingService.getPropertyBookings()
                 : bookingService.getBookings();
 
@@ -59,7 +60,8 @@ public class BookingController {
     public ResponseEntity<?> requestBooking(@Valid @PathVariable UUID propertyId, @RequestBody BookingReqDto booking) {
         bookingService.requestBooking(propertyId, booking);
 
-        return ResponseEntity.ok(Map.of("success", true, "message", "Successfully requested to book a property."));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(Map.of("success", true, "message", "Successfully requested to book a property."));
     }
 
     @PreAuthorize("hasRole('OWNER')")

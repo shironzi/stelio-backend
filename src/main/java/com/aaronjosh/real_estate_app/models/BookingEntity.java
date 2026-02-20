@@ -1,5 +1,6 @@
 package com.aaronjosh.real_estate_app.models;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -44,6 +45,7 @@ public class BookingEntity {
     private UUID id;
 
     private PaymentStatus paymentStatus = PaymentStatus.PENDING;
+    private BigDecimal balance;
     private LocalDateTime startDateTime;
     private LocalDateTime endDateTime;
 
@@ -66,8 +68,8 @@ public class BookingEntity {
     private UserEntity user;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private BookingStatus status = BookingStatus.PENDING_APPROVAL;
+    @Column(nullable = false, length = 50)
+    private BookingStatus status;
 
     @PrePersist
     protected void onCreate() {
