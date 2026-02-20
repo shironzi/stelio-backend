@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -71,7 +72,8 @@ public class PropertyController {
     public ResponseEntity<?> addProperty(@ModelAttribute PropertyDto property) {
         propertyService.addProperty(property);
 
-        return ResponseEntity.ok(Map.of("success", true, "message", "Property created Successfully"));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(Map.of("success", true, "message", "Property created Successfully"));
     }
 
     @PostMapping("/{propertyId}")
