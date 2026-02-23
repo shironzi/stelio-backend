@@ -16,6 +16,7 @@ import com.aaronjosh.real_estate_app.dto.booking.BookingReqDto;
 import com.aaronjosh.real_estate_app.dto.booking.BookingResDto;
 import com.aaronjosh.real_estate_app.models.UserEntity.Role;
 import com.aaronjosh.real_estate_app.services.BookingService;
+import com.aaronjosh.real_estate_app.services.IdempotencyService;
 import com.aaronjosh.real_estate_app.services.UserService;
 
 import jakarta.validation.Valid;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 @RestController
 @RequestMapping("/api/bookings")
@@ -35,6 +37,9 @@ public class BookingController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private IdempotencyService idempService;
 
     @GetMapping("/")
     @PreAuthorize("hasAnyRole('RENTER','OWNER')")
@@ -57,11 +62,15 @@ public class BookingController {
 
     @PreAuthorize("hasRole('RENTER')")
     @PostMapping("/{propertyId}")
-    public ResponseEntity<?> requestBooking(@Valid @PathVariable UUID propertyId, @RequestBody BookingReqDto booking) {
-        bookingService.requestBooking(propertyId, booking);
+    public ResponseEntity<?> requestBooking(@RequestHeader("Idempotency-Key") String idempotencyKey,
+            @Valid @PathVariable UUID propertyId, @RequestBody BookingReqDto booking) {
+
+        // Creating a booking and handle Idempotency
+        Map<String, Object> res = idempService.handle(idempotencyKey,
+                () -> bookingService.requestBooking(propertyId, booking));
 
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(Map.of("success", true, "message", "Successfully requested to book a property."));
+                .body(res);
     }
 
     @PreAuthorize("hasRole('OWNER')")

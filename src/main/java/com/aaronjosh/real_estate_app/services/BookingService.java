@@ -166,7 +166,7 @@ public class BookingService {
 
     @Transactional
     // Requesting for booking a property with a Pending for approval
-    public void requestBooking(UUID propertyId, BookingReqDto bookingInfo) {
+    public String requestBooking(UUID propertyId, BookingReqDto bookingInfo) {
         UserDetails user = userService.getUserDetails();
 
         // Property details
@@ -214,6 +214,8 @@ public class BookingService {
 
         bookingRepo.save(booking);
         eventPublisher.handleBookingRequested(new BookingRequestedEvent(bookingInfo, userEntity, property));
+
+        return "Successfully requested to book a property.";
     }
 
     // cancel booking from renters
