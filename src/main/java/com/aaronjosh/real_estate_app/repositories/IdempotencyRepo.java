@@ -10,5 +10,5 @@ import com.aaronjosh.real_estate_app.models.IdempotencyEntity;
 
 @Repository
 public interface IdempotencyRepo extends JpaRepository<IdempotencyEntity, UUID> {
-    Optional<IdempotencyEntity> findByKey(String key);
+    Optional<IdempotencyEntity> findByIdempotencyKey(String key);
 }

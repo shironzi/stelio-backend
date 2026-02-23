@@ -27,7 +27,7 @@ public class IdempotencyEntity {
     private UUID id;
 
     @Column(nullable = false, unique = true)
-    private String key;
+    private String idempotencyKey;
 
     @Column(columnDefinition = "TEXT")
     private String response;
@@ -35,7 +35,6 @@ public class IdempotencyEntity {
     @Column(nullable = false)
     private IdempotencyStatus status = IdempotencyStatus.PENDING;
 
-    @Column()
     private LocalDateTime created_at;
 
     @PrePersist

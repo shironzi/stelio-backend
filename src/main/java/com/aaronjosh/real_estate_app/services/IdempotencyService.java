@@ -19,7 +19,7 @@ public class IdempotencyService {
 
     public Map<String, Object> handle(String key, Supplier<String> operation) {
 
-        Optional<IdempotencyEntity> existing = repo.findByKey(key);
+        Optional<IdempotencyEntity> existing = repo.findByIdempotencyKey(key);
 
         if (existing.isPresent()) {
             // Return stored response if key already exists
@@ -33,7 +33,7 @@ public class IdempotencyService {
 
         // Store response
         IdempotencyEntity idemp = new IdempotencyEntity();
-        idemp.setKey(key);
+        idemp.setIdempotencyKey(key);
         idemp.setResponse(response);
         idemp.setStatus(IdempotencyStatus.COMPLETED);
         repo.save(idemp);
