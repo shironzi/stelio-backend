@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -66,11 +65,8 @@ public class BookingController {
             @Valid @PathVariable UUID propertyId, @RequestBody BookingReqDto booking) {
 
         // Creating a booking and handle Idempotency
-        Map<String, Object> res = idempService.handle(idempotencyKey,
+        return idempService.handle(idempotencyKey,
                 () -> bookingService.requestBooking(propertyId, booking));
-
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(res);
     }
 
     @PreAuthorize("hasRole('OWNER')")
