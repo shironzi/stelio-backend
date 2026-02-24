@@ -31,8 +31,8 @@ public class FileEntity {
     private String name;
     private String type;
 
-    private LocalDateTime created_at;
-    private LocalDateTime updated_at;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     @Lob
     @Column(name = "data", nullable = false, columnDefinition = "LONGBLOB")
@@ -57,8 +57,8 @@ public class FileEntity {
 
     @PrePersist
     protected void onCreate() {
-        created_at = LocalDateTime.now();
-        updated_at = LocalDateTime.now();
+        createdAt  = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
 
         if (propertyEntity == null && message == null) {
             throw new IllegalArgumentException(
@@ -73,6 +73,6 @@ public class FileEntity {
 
     @PreUpdate
     protected void onUpdate() {
-        updated_at = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
     }
 }

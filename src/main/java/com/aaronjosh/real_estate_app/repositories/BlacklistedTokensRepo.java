@@ -1,5 +1,7 @@
 package com.aaronjosh.real_estate_app.repositories;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -11,4 +13,6 @@ import com.aaronjosh.real_estate_app.models.BlacklistedTokens;
 @Repository
 public interface BlacklistedTokensRepo extends JpaRepository<BlacklistedTokens, UUID> {
     Optional<BlacklistedTokens> findByToken(String token);
+
+    List<BlacklistedTokens> deleteByExpiresAtBefore(LocalDateTime expiresAt);
 }

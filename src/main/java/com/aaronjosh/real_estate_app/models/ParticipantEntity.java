@@ -32,7 +32,7 @@ public class ParticipantEntity {
     private UUID id;
 
     private LocalDateTime joinedAt;
-    private LocalDateTime updated_at;
+    private LocalDateTime updatedAt;
     private Boolean muted = false;
     private Integer unreadCount = 0;
 
@@ -50,11 +50,11 @@ public class ParticipantEntity {
     @PrePersist
     protected void onCreate() {
         joinedAt = LocalDateTime.now();
-        updated_at = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
     }
 
     @PreUpdate
     protected void onUpdate() {
-        updated_at = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
     }
 }

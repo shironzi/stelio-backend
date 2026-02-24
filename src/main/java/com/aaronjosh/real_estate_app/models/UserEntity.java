@@ -74,9 +74,8 @@ public class UserEntity {
     @Column(nullable = false)
     private String password;
 
-    private LocalDateTime created_at = LocalDateTime.now();
-
-    private LocalDateTime updated_at = LocalDateTime.now();
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "host", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<PropertyEntity> properties;
@@ -121,8 +120,8 @@ public class UserEntity {
 
     @PrePersist
     protected void onCreate() {
-        created_at = LocalDateTime.now();
-        updated_at = LocalDateTime.now();
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
     }
     /*
      * Sets update_at before updating.
@@ -130,7 +129,7 @@ public class UserEntity {
 
     @PreUpdate
     protected void onUpdate() {
-        updated_at = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
     }
 
     // returns the fullname.

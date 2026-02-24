@@ -35,10 +35,13 @@ public class IdempotencyEntity {
     @Column(nullable = false)
     private IdempotencyStatus status = IdempotencyStatus.PENDING;
 
-    private LocalDateTime created_at;
+    @Column(nullable = false)
+    private LocalDateTime expiresAt = LocalDateTime.now().plusHours(24);
+
+    private LocalDateTime createdAt;
 
     @PrePersist
     protected void onCreate() {
-        created_at = LocalDateTime.now();
+        createdAt = LocalDateTime.now();
     }
 }

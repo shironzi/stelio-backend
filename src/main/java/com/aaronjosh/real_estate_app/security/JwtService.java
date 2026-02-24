@@ -4,6 +4,9 @@
 
 package com.aaronjosh.real_estate_app.security;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.function.Function;
 
@@ -99,8 +102,14 @@ public class JwtService {
      * blacklisting token on logout
      */
     public void revokeToken(String token) {
+        // Returns the token expiration date and time.
+        Date date = extractClaim(token, Claims::getExpiration);
+        LocalDateTime expirationDate = LocalDateTime.ofInstant(Instant.ofEpochMilli(date.getTime()),
+                ZoneId.systemDefault());
+
         BlacklistedTokens revokedToken = new BlacklistedTokens();
         revokedToken.setToken(token);
+        revokedToken.setExpiresAt(expirationDate);
 
         blacklistedTokensRepo.save(revokedToken);
     }

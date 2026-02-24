@@ -18,9 +18,9 @@ public class BlacklistedTokens {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    private LocalDateTime expires_at = LocalDateTime.now();
+    private LocalDateTime expiresAt;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(nullable = false, unique = true, length = 512)
     private String token;
 
     public BlacklistedTokens() {
