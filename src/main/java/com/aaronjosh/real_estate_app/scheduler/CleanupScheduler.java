@@ -18,16 +18,17 @@ public class CleanupScheduler {
     @Autowired
     private IdempotencyRepo idempotencyRepo;
 
+    // Schedule tasks executes everyday at 2:30 AM
     @Scheduled(cron = "0 30 2 * * ?")
     public void cleanupExpiredIdempotency() {
         LocalDateTime now = LocalDateTime.now();
         idempotencyRepo.deleteByExpiresAtBefore(now);
     }
 
+    // Schedule tasks executes everyday at 2:30 AM
     @Scheduled(cron = "0 30 2 * * ?")
     public void cleanupExpiredBlacklistedTokens() {
         LocalDateTime now = LocalDateTime.now();
         blacklistedTokensRepo.deleteByExpiresAtBefore(now);
-        System.out.println("delete now");
     }
 }
