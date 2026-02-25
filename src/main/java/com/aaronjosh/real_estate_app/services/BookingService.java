@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.Objects;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.stream.Collectors;
 
@@ -173,9 +174,11 @@ public class BookingService {
         PropertyEntity property = propertyRepo.findById(Objects.requireNonNull(propertyId))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "property not found"));
 
+        LocalDateTime now = LocalDateTime.now();
+
         // Checks pending booking
-        boolean hasActiveBooking = bookingRepo.existsByUser_IdAndStatus(user.getId(), BookingStatus.PENDING_APPROVAL)
-                || bookingRepo.existsByUser_IdAndStatus(user.getId(), BookingStatus.PENDING_PAYMENT);
+        Boolean hasActiveBooking = bookingRepo.existsByStatusInAndExpiresAtBefore(
+                List.of(BookingStatus.PENDING_APPROVAL, BookingStatus.PENDING_PAYMENT), now);
 
         if (hasActiveBooking) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "You already have a pending booking.");

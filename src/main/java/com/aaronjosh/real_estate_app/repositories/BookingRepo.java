@@ -2,6 +2,7 @@ package com.aaronjosh.real_estate_app.repositories;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -33,4 +34,10 @@ public interface BookingRepo extends JpaRepository<BookingEntity, UUID> {
       @Param("propertyId") UUID propertyId,
       @Param("requestEnd") LocalDateTime requestEnd,
       @Param("requestStart") LocalDateTime requestStart);
+
+  @Query("SELECT CASE WHEN COUNT(b) > 0 THEN TRUE ELSE FALSE END " +
+      "FROM BookingEntity b " +
+      "WHERE b.status IN :statuses AND b.expiresAt <= :now")
+  Boolean existsByStatusInAndExpiresAtBefore(@Param("statuses") List<BookingStatus> statuses,
+      @Param("now") LocalDateTime now);
 }
