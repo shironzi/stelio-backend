@@ -1,6 +1,7 @@
 package com.aaronjosh.real_estate_app.services;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,11 +25,15 @@ public class PaymentService {
         BookingEntity booking = bookingRepo.findById(bookingId).orElseThrow(
                 () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Booking not found"));
 
+        LocalDateTime now = LocalDateTime.now();
+
+        if (booking.getExpiresAt().isBefore(now)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Booking is already expired");
+        }
+
         if (booking.getPaymentStatus() == PaymentStatus.PAID) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Booking already paid");
         }
-
-        System.out.println(payment.getAmount());
 
         if (payment.getAmount() == null ||
                 payment.getAmount().compareTo(BigDecimal.ZERO) <= 0) {

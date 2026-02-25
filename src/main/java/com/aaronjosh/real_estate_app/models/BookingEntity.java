@@ -26,12 +26,13 @@ import lombok.Data;
 public class BookingEntity {
     public enum BookingStatus {
         CANCELLED, // User or system cancelled
-        PENDING_PAYMENT, // Reservation created, awaiting full payment
+        PENDING_PAYMENT, // Reservation created, awaiting full payment on lasts for 10 mins
         PENDING_APPROVAL, // Request-to-book submitted, awaiting host approval
         CONFIRMED, // Payment completed or host approved
         REJECTED, // Host rejected request
         NOSHOW, // Guest didn’t arrive
-        COMPLETED // Stay completed
+        COMPLETED, // Stay completed
+        EXPIRED // expired at 10 mins if not paid
     }
 
     public enum PaymentStatus {
@@ -52,6 +53,7 @@ public class BookingEntity {
     private List<String> guestNames;
     private Integer totalGuests;
     private String contactPhone;
+    private LocalDateTime expiresAt;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -75,6 +77,7 @@ public class BookingEntity {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
+        expiresAt = LocalDateTime.now().plusMinutes(10);
     }
 
     @PreUpdate
