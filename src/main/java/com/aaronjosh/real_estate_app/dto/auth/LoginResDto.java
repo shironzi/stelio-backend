@@ -1,5 +1,7 @@
 package com.aaronjosh.real_estate_app.dto.auth;
 
+import java.util.UUID;
+
 import com.aaronjosh.real_estate_app.models.UserEntity.Role;
 
 import lombok.AllArgsConstructor;
@@ -12,6 +14,7 @@ public class LoginResDto {
     private String name;
     private String email;
     private Role role;
+    private UUID id;
 
     public LoginResDto() {
 

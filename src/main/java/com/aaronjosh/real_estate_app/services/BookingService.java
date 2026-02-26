@@ -223,7 +223,7 @@ public class BookingService {
 
     // cancel booking from renters
     public void cancelBooking(UUID bookingId) {
-        BookingEntity booking = bookingRepo.findById(Objects.requireNonNull(bookingId, "bookingId must not be null"))
+        BookingEntity booking = bookingRepo.findById(bookingId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Booking not found."));
 
         booking.setStatus(BookingStatus.CANCELLED);

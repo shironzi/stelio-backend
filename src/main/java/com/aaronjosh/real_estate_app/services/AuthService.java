@@ -87,6 +87,7 @@ public class AuthService {
         loginData.setEmail(user.getEmail());
         loginData.setRole(user.getRole());
         loginData.setToken(jwtToken);
+        loginData.setId(user.getId());
 
         return loginData;
 

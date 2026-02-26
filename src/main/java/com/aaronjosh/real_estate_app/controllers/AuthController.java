@@ -47,9 +47,8 @@ public class AuthController {
                     .ok(Map.of(
                             "success", true,
                             "message", "Login Successful",
-                            "token", res.getToken(), "name",
-                            res.getName(), "email", res.getEmail(),
-                            "role", res.getRole()));
+                            "token", res.getToken(),
+                            "userDetails", res));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", e.getMessage()));
         } catch (Exception e) {
