@@ -15,9 +15,6 @@ public class BookingReqDto {
     private LocalDateTime end;
 
     @Column(nullable = false)
-    private Integer totalGuests;
-
-    @Column(nullable = false)
     private String contactPhone;
 
     private List<String> guestNames;

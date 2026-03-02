@@ -28,7 +28,7 @@ public class BookingMessageTemplate {
                 "Check-in: " + start + "\n" +
                 "Check-out: " + end + "\n" +
                 "Total Nights: " + totalNights + "\n" +
-                "Guests: " + bookingInfo.getTotalGuests() + "\n\n" +
+                "Guests: " + bookingInfo.getGuestNames().size() + "\n\n" +
                 "👤 Guest Information\n" +
                 "Contact Phone: " + bookingInfo.getContactPhone() + "\n" +
                 "Guest Names: " + bookingInfo.getGuestNames() + "\n\n" +

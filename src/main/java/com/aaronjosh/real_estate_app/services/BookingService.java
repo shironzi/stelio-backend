@@ -165,7 +165,6 @@ public class BookingService {
         return dto;
     }
 
-    @Transactional
     // Requesting for booking a property with a Pending for approval
     public String requestBooking(UUID propertyId, BookingReqDto bookingInfo) {
         UserDetails user = userService.getUserDetails();
@@ -207,7 +206,7 @@ public class BookingService {
         booking.setUser(userEntity);
         booking.setStartDateTime(bookingInfo.getStart());
         booking.setEndDateTime(bookingInfo.getEnd());
-        booking.setTotalGuests(bookingInfo.getTotalGuests());
+        booking.setTotalGuests(bookingInfo.getGuestNames().size());
         booking.setContactPhone(bookingInfo.getContactPhone());
         booking.setStatus(BookingStatus.PENDING_APPROVAL);
 
