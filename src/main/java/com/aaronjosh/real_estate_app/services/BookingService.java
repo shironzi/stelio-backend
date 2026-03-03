@@ -207,7 +207,6 @@ public class BookingService {
         booking.setStartDateTime(bookingInfo.getStart());
         booking.setEndDateTime(bookingInfo.getEnd());
         booking.setContactPhone(bookingInfo.getContactPhone());
-        booking.setStatus(BookingStatus.PENDING_APPROVAL);
 
         if (bookingInfo.getGuestNames() != null && !bookingInfo.getGuestNames().isEmpty()) {
             booking.setGuestNames(bookingInfo.getGuestNames());
