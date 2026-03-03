@@ -206,12 +206,12 @@ public class BookingService {
         booking.setUser(userEntity);
         booking.setStartDateTime(bookingInfo.getStart());
         booking.setEndDateTime(bookingInfo.getEnd());
-        booking.setTotalGuests(bookingInfo.getGuestNames().size());
         booking.setContactPhone(bookingInfo.getContactPhone());
         booking.setStatus(BookingStatus.PENDING_APPROVAL);
 
-        if (bookingInfo.getGuestNames() != null) {
+        if (bookingInfo.getGuestNames() != null && !bookingInfo.getGuestNames().isEmpty()) {
             booking.setGuestNames(bookingInfo.getGuestNames());
+            booking.setTotalGuests(bookingInfo.getGuestNames().size());
         }
 
         bookingRepo.save(booking);

@@ -20,6 +20,7 @@ public class BookingMessageTemplate {
         LocalDateTime end = bookingInfo.getEnd();
         long totalDays = ChronoUnit.DAYS.between(start, end);
         int totalNights = (int) totalDays;
+        int totalGuests = bookingInfo.getGuestNames().size();
 
         return "Hello " + ownerName + "\n" +
                 "🏠 Property\n" +
@@ -28,10 +29,9 @@ public class BookingMessageTemplate {
                 "Check-in: " + start + "\n" +
                 "Check-out: " + end + "\n" +
                 "Total Nights: " + totalNights + "\n" +
-                "Guests: " + bookingInfo.getGuestNames().size() + "\n\n" +
+                "Guests: " + totalGuests + "\n\n" +
                 "👤 Guest Information\n" +
                 "Contact Phone: " + bookingInfo.getContactPhone() + "\n" +
-                "Guest Names: " + bookingInfo.getGuestNames() + "\n\n" +
                 "📝 Special Requests\n" +
                 "💳 Payment Status\n" +
                 "Pending";
