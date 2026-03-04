@@ -2,6 +2,7 @@ package com.aaronjosh.real_estate_app.repositories;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,31 +15,29 @@ import com.aaronjosh.real_estate_app.models.BookingEntity.BookingStatus;
 
 @Repository
 public interface BookingRepo extends JpaRepository<BookingEntity, UUID> {
-        public List<BookingEntity> findByUser_id(UUID id);
+  public List<BookingEntity> findByUser_id(UUID id);
 
-        public List<BookingEntity> findAllByPropertyId(UUID id);
+  public List<BookingEntity> findAllByPropertyId(UUID id);
 
-        boolean existsByUser_IdAndStatus(UUID userId, BookingStatus status);
+  boolean existsByUser_IdAndStatus(UUID userId, BookingStatus status);
 
-        public List<BookingEntity> findByProperty_Host_Id(UUID hostId);
+  public List<BookingEntity> findByProperty_Host_Id(UUID hostId);
 
-        @Query("""
-                            SELECT b FROM BookingEntity b
-                            WHERE b.property.id = :propertyId
-                              AND b.startDateTime <= :requestEnd
-                              AND b.endDateTime >= :requestStart
-                              AND b.status = 'APPROVED'
-                        """)
-        List<BookingEntity> findOverlappingBookings(
-                        @Param("propertyId") UUID propertyId,
-                        @Param("requestEnd") LocalDateTime requestEnd,
-                        @Param("requestStart") LocalDateTime requestStart);
+  @Query("""
+          SELECT b FROM BookingEntity b
+          WHERE b.property.id = :propertyId
+            AND b.startDateTime <= :requestEnd
+            AND b.endDateTime >= :requestStart
+            AND b.status = 'APPROVED'
+      """)
+  List<BookingEntity> findOverlappingBookings(
+      @Param("propertyId") UUID propertyId,
+      @Param("requestEnd") LocalDateTime requestEnd,
+      @Param("requestStart") LocalDateTime requestStart);
 
-        @Query("SELECT EXISTS (\n" + //
-                        "    SELECT 1\n" + //
-                        "    FROM BookingEntity b\n" + //
-                        "    WHERE b.status IN :statuses AND b.expiresAt > :now \n" + //
-                        ")")
-        Boolean existsByStatusInAndExpiresAtBefore(@Param("statuses") List<BookingStatus> statuses,
-                        @Param("now") LocalDateTime now);
+  @Query(" SELECT b\n" + //
+      "    FROM BookingEntity b\n" + //
+      "    WHERE b.status IN :statuses AND b.expiresAt > :now \n")
+  Optional<BookingEntity> findByStatusInAndExpiresAtBefore(@Param("statuses") List<BookingStatus> statuses,
+      @Param("now") LocalDateTime now);
 }

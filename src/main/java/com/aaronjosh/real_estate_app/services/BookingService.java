@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.Objects;
+import java.util.Optional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -56,16 +57,22 @@ public class BookingService {
     // returns bookings from a user.
     public List<BookingResDto> getBookings() {
         UserDetails user = userService.getUserDetails();
+        LocalDateTime now = LocalDateTime.now();
 
         List<BookingResDto> bookings = bookingRepo.findByUser_id(user.getId()).stream().map(
                 (booking) -> {
                     BookingResDto dto = new BookingResDto();
 
+                    if (booking.getExpiresAt() != null && now.isAfter(booking.getExpiresAt())) {
+                        booking.setStatus(BookingStatus.EXPIRED);
+                        bookingRepo.save(booking);
+                    }
+
                     // Booking fields
                     dto.setId(booking.getId());
                     dto.setPaymentStatus(booking.getPaymentStatus().toString());
-                    dto.setStartDateTime(booking.getStartDateTime());
-                    dto.setEndDateTime(booking.getEndDateTime());
+                    dto.setStart(booking.getStartDateTime());
+                    dto.setEnd(booking.getEndDateTime());
                     dto.setGuestNames(booking.getGuestNames());
                     dto.setTotalGuests(booking.getTotalGuests());
                     dto.setContactPhone(booking.getContactPhone());
@@ -83,6 +90,7 @@ public class BookingService {
                     dto.setTotalBath(booking.getProperty().getTotalBath());
                     dto.setAddress(booking.getProperty().getAddress());
                     dto.setCity(booking.getProperty().getCity());
+                    dto.setExpiresAt(booking.getExpiresAt());
 
                     dto.setImages(booking.getProperty().getImages().stream()
                             .map(image -> linkGenerator.generateLink(image))
@@ -104,8 +112,8 @@ public class BookingService {
                     // Booking fields
                     dto.setId(booking.getId());
                     dto.setPaymentStatus(booking.getPaymentStatus().toString());
-                    dto.setStartDateTime(booking.getStartDateTime());
-                    dto.setEndDateTime(booking.getEndDateTime());
+                    dto.setStart(booking.getStartDateTime());
+                    dto.setEnd(booking.getEndDateTime());
                     dto.setGuestNames(booking.getGuestNames());
                     dto.setTotalGuests(booking.getTotalGuests());
                     dto.setContactPhone(booking.getContactPhone());
@@ -142,8 +150,8 @@ public class BookingService {
         // Booking fields
         dto.setId(booking.getId());
         dto.setPaymentStatus(booking.getPaymentStatus().toString());
-        dto.setStartDateTime(booking.getStartDateTime());
-        dto.setEndDateTime(booking.getEndDateTime());
+        dto.setStart(booking.getStartDateTime());
+        dto.setEnd(booking.getEndDateTime());
         dto.setGuestNames(booking.getGuestNames());
         dto.setTotalGuests(booking.getTotalGuests());
         dto.setContactPhone(booking.getContactPhone());
@@ -176,11 +184,18 @@ public class BookingService {
         LocalDateTime now = LocalDateTime.now();
 
         // Checks pending booking
-        Boolean hasActiveBooking = bookingRepo.existsByStatusInAndExpiresAtBefore(
+        Optional<BookingEntity> activeBooking = bookingRepo.findByStatusInAndExpiresAtBefore(
                 List.of(BookingStatus.PENDING_APPROVAL, BookingStatus.PENDING_PAYMENT), now);
 
-        if (hasActiveBooking) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "You already have a pending booking.");
+        if (activeBooking.isPresent()) {
+            // Check if the booking belongs to the current user
+            if (activeBooking.get().getUser().getId() == user.getId()) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "You already have a pending booking.");
+            } else {
+                // Booking exists, but it's for a different user
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "Sorry, the booking isn’t available on your selected date.");
+            }
         }
 
         // Check for booking date conflicts
@@ -207,6 +222,7 @@ public class BookingService {
         booking.setStartDateTime(bookingInfo.getStart());
         booking.setEndDateTime(bookingInfo.getEnd());
         booking.setContactPhone(bookingInfo.getContactPhone());
+        booking.setBalance(property.getPrice());
 
         if (bookingInfo.getGuestNames() != null && !bookingInfo.getGuestNames().isEmpty()) {
             booking.setGuestNames(bookingInfo.getGuestNames());

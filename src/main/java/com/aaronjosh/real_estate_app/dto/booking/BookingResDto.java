@@ -13,8 +13,8 @@ public class BookingResDto {
     // Booking fields
     private UUID id;
     private String paymentStatus;
-    private LocalDateTime startDateTime;
-    private LocalDateTime endDateTime;
+    private LocalDateTime start;
+    private LocalDateTime end;
     private String specialRequest;
     private List<String> guestNames;
     private Integer totalGuests;
@@ -34,4 +34,5 @@ public class BookingResDto {
     private String address;
     private String city;
     private List<String> images;
+    private LocalDateTime expiresAt;
 }
