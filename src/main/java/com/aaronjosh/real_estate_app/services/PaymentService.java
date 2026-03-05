@@ -15,12 +15,15 @@ import com.aaronjosh.real_estate_app.models.BookingEntity.BookingStatus;
 import com.aaronjosh.real_estate_app.models.BookingEntity.PaymentStatus;
 import com.aaronjosh.real_estate_app.repositories.BookingRepo;
 
+import jakarta.transaction.Transactional;
+
 @Service
 public class PaymentService {
 
     @Autowired
     private BookingRepo bookingRepo;
 
+    @Transactional
     public void processPayment(UUID bookingId, PaymentReqDto payment) {
         BookingEntity booking = bookingRepo.findById(bookingId).orElseThrow(
                 () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Booking not found"));
@@ -28,6 +31,8 @@ public class PaymentService {
         LocalDateTime now = LocalDateTime.now();
 
         if (booking.getExpiresAt().isBefore(now)) {
+            booking.setStatus(BookingStatus.EXPIRED);
+            bookingRepo.save(booking);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Booking is already expired");
         }
 

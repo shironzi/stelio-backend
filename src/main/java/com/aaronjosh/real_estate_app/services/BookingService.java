@@ -63,11 +63,6 @@ public class BookingService {
                 (booking) -> {
                     BookingResDto dto = new BookingResDto();
 
-                    if (booking.getExpiresAt() != null && now.isAfter(booking.getExpiresAt())) {
-                        booking.setStatus(BookingStatus.EXPIRED);
-                        bookingRepo.save(booking);
-                    }
-
                     // Booking fields
                     dto.setId(booking.getId());
                     dto.setPaymentStatus(booking.getPaymentStatus().toString());
@@ -76,7 +71,12 @@ public class BookingService {
                     dto.setGuestNames(booking.getGuestNames());
                     dto.setTotalGuests(booking.getTotalGuests());
                     dto.setContactPhone(booking.getContactPhone());
-                    dto.setStatus(booking.getStatus().toString());
+
+                    if (now.isAfter(booking.getExpiresAt())) {
+                        dto.setStatus(BookingStatus.EXPIRED.toString());
+                    } else {
+                        dto.setStatus(booking.getStatus().toString());
+                    }
 
                     // Property fields
                     dto.setPropertyId(booking.getProperty().getId());
@@ -217,7 +217,7 @@ public class BookingService {
         // Create booking entity
         BookingEntity booking = new BookingEntity();
         booking.setProperty(property);
-        booking.setStatus(BookingStatus.PENDING_APPROVAL);
+        booking.setStatus(BookingStatus.PENDING_PAYMENT);
         booking.setUser(userEntity);
         booking.setStartDateTime(bookingInfo.getStart());
         booking.setEndDateTime(bookingInfo.getEnd());
