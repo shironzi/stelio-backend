@@ -22,7 +22,7 @@ import lombok.Data;
 @Table(name = "participants")
 public class ParticipantEntity {
 
-    enum MessageRole {
+    public enum MessageRole {
         ADMIN,
         MEMBER
     }

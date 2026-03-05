@@ -13,6 +13,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.aaronjosh.real_estate_app.dto.auth.UserDetails;
 import com.aaronjosh.real_estate_app.dto.booking.BookingReqDto;
 import com.aaronjosh.real_estate_app.dto.message.ChatHeadDto;
+import com.aaronjosh.real_estate_app.dto.message.ConversationReqDto;
 import com.aaronjosh.real_estate_app.dto.message.MessageResDto;
 import com.aaronjosh.real_estate_app.dto.message.SendMessageDto;
 import com.aaronjosh.real_estate_app.models.ConversationEntity;
@@ -21,10 +22,15 @@ import com.aaronjosh.real_estate_app.models.MessageEntity;
 import com.aaronjosh.real_estate_app.models.ParticipantEntity;
 import com.aaronjosh.real_estate_app.models.PropertyEntity;
 import com.aaronjosh.real_estate_app.models.UserEntity;
+import com.aaronjosh.real_estate_app.models.ParticipantEntity.MessageRole;
 import com.aaronjosh.real_estate_app.repositories.ConversationRepository;
 import com.aaronjosh.real_estate_app.repositories.MessageRepository;
+import com.aaronjosh.real_estate_app.repositories.ParticipantRepo;
+import com.aaronjosh.real_estate_app.repositories.UserRepository;
 import com.aaronjosh.real_estate_app.util.BookingMessageTemplate;
 import com.aaronjosh.real_estate_app.util.LinkGenerator;
+
+import java.util.Arrays;
 
 @Service
 public class MessageService {
@@ -45,6 +51,12 @@ public class MessageService {
 
     @Autowired
     private LinkGenerator linkGenerator;
+
+    @Autowired
+    private ParticipantRepo participantRepo;
+
+    @Autowired
+    private UserRepository userRepository;
 
     public List<ChatHeadDto> getChatHeads() {
         UserDetails user = userService.getUserDetails();
@@ -76,7 +88,16 @@ public class MessageService {
     }
 
     public List<MessageResDto> getMessagesFromConversationId(UUID conversationId) {
-        return messageRepository.findAllMessagesByConversationId(conversationId)
+
+        UserDetails user = userService.getUserDetails();
+        System.out.println(user.getId());
+
+        ParticipantEntity participant = participantRepo.findByConversationIdAndWhoJoinedId(conversationId, user.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Conversation not found"));
+
+        List<MessageEntity> messages = participant.getConversation().getMessages();
+
+        return messages
                 .stream()
                 .map(messageEntity -> new MessageResDto(
                         messageEntity.getFrom().getId(),
@@ -89,18 +110,58 @@ public class MessageService {
                 .collect(Collectors.toList());
     }
 
-    public void sendMessageByConversationId(UUID conversationId, SendMessageDto messageInfo) {
-        if (conversationId == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Conversation ID cannot be null");
+    public void createNewConversation(ConversationReqDto participant) {
+        UserDetails user = userService.getUserDetails();
+
+        UserEntity owner = userRepository.findById(user.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        UserEntity receiptient = userRepository.findById(participant.getParticipantId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        if (owner.getId().equals(receiptient)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cannot create a conversation with yourself");
         }
 
-        ConversationEntity conversation = conversationRepo.findById(conversationId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Conversation not found"));
+        ConversationEntity conversation = new ConversationEntity();
+
+        // Conversation Owner
+        ParticipantEntity conversationOwner = new ParticipantEntity();
+        conversationOwner.setRole(MessageRole.ADMIN);
+        conversationOwner.setWhoJoined(owner);
+        conversationOwner.setConversation(conversation);
+
+        // Conversation receipient
+        ParticipantEntity conversationReceipient = new ParticipantEntity();
+        conversationReceipient.setRole(MessageRole.MEMBER);
+        conversationReceipient.setWhoJoined(receiptient);
+        conversationReceipient.setConversation(conversation);
+
+        List<ParticipantEntity> participants = new ArrayList<>();
+        participants.add(conversationReceipient);
+        participants.add(conversationOwner);
+
+        conversation.setParticipants(participants);
+        conversationRepo.save(conversation);
+    }
+
+    public void sendMessageByConversationId(UUID conversationId, SendMessageDto messageInfo) {
+        if (messageInfo.getMessage() == null || messageInfo.getMessage().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Message cannot be empty");
+        }
+
+        UserDetails user = userService.getUserDetails();
+        UserEntity userEntity = userRepository.findById(user.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        ParticipantEntity participant = participantRepo.findByConversationIdAndWhoJoinedId(conversationId, user.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Conversation not found"));
+
+        ConversationEntity conversation = participant.getConversation();
 
         MessageEntity message = new MessageEntity();
         message.setMesssages(messageInfo.getMessage());
         message.setConversation(conversation);
+        message.setFrom(userEntity);
 
         if (messageInfo.getFiles() != null && !messageInfo.getFiles().isEmpty()) {
             List<FileEntity> files = messageInfo.getFiles().stream()

@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.aaronjosh.real_estate_app.dto.message.ChatHeadDto;
+import com.aaronjosh.real_estate_app.dto.message.ConversationReqDto;
+import com.aaronjosh.real_estate_app.dto.message.MessageResDto;
 import com.aaronjosh.real_estate_app.dto.message.SendMessageDto;
 import com.aaronjosh.real_estate_app.services.MessageService;
 
@@ -32,6 +34,24 @@ public class MessageController {
 
         return ResponseEntity
                 .ok(Map.of("success", true, "message", "Successfully retrived messages", "chats", chatHeads));
+    }
+
+    @PostMapping("/")
+    public ResponseEntity<?> createNewConversation(@RequestBody ConversationReqDto particiant) {
+        messageService.createNewConversation(particiant);
+
+        return ResponseEntity.ok(
+                Map.of(
+                        "success", true,
+                        "message", "Successfully created conversation"));
+    }
+
+    @GetMapping("/{conversationId}")
+    public ResponseEntity<?> getMessageById(@Valid @PathVariable UUID conversationId) {
+
+        List<MessageResDto> messages = messageService.getMessagesFromConversationId(conversationId);
+
+        return ResponseEntity.ok(Map.of("success", true, "messages", messages));
     }
 
     @PostMapping("/{conversationId}")

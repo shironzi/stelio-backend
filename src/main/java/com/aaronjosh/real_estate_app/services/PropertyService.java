@@ -87,6 +87,7 @@ public class PropertyService {
         property.setTotalBath(propertyDto.getTotalBath());
         property.setAddress(propertyDto.getAddress());
         property.setCity(propertyDto.getCity());
+        property.setStatus(PropertyStatus.ACTIVE);
 
         // adding the relation of images to property
         for (MultipartFile image : propertyDto.getImage()) {
