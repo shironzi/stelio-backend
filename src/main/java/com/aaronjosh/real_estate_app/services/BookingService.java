@@ -185,7 +185,7 @@ public class BookingService {
 
         // Checks pending booking
         Optional<BookingEntity> activeBooking = bookingRepo.findByStatusInAndExpiresAtBefore(
-                List.of(BookingStatus.PENDING_APPROVAL, BookingStatus.PENDING_PAYMENT), now);
+                List.of(BookingStatus.PENDING_APPROVAL, BookingStatus.PENDING_PAYMENT), now, propertyId);
 
         if (activeBooking.isPresent()) {
             // Check if the booking belongs to the current user
