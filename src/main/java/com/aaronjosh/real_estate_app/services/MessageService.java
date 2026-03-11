@@ -100,6 +100,7 @@ public class MessageService {
         return messages
                 .stream()
                 .map(messageEntity -> new MessageResDto(
+                        messageEntity.getId(),
                         messageEntity.getFrom().getId(),
                         messageEntity.getFrom().getFullName(),
                         messageEntity.getMesssages(),
