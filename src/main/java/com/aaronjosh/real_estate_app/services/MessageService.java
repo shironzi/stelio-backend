@@ -1,6 +1,7 @@
 package com.aaronjosh.real_estate_app.services;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -14,6 +15,7 @@ import com.aaronjosh.real_estate_app.dto.auth.UserDetails;
 import com.aaronjosh.real_estate_app.dto.booking.BookingReqDto;
 import com.aaronjosh.real_estate_app.dto.message.ChatHeadDto;
 import com.aaronjosh.real_estate_app.dto.message.ConversationReqDto;
+import com.aaronjosh.real_estate_app.dto.message.MessageDto;
 import com.aaronjosh.real_estate_app.dto.message.MessageResDto;
 import com.aaronjosh.real_estate_app.dto.message.SendMessageDto;
 import com.aaronjosh.real_estate_app.models.ConversationEntity;
@@ -29,8 +31,6 @@ import com.aaronjosh.real_estate_app.repositories.ParticipantRepo;
 import com.aaronjosh.real_estate_app.repositories.UserRepository;
 import com.aaronjosh.real_estate_app.util.BookingMessageTemplate;
 import com.aaronjosh.real_estate_app.util.LinkGenerator;
-
-import java.util.Arrays;
 
 @Service
 public class MessageService {
@@ -90,7 +90,6 @@ public class MessageService {
     public List<MessageResDto> getMessagesFromConversationId(UUID conversationId) {
 
         UserDetails user = userService.getUserDetails();
-        System.out.println(user.getId());
 
         ParticipantEntity participant = participantRepo.findByConversationIdAndWhoJoinedId(conversationId, user.getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Conversation not found"));
@@ -99,6 +98,7 @@ public class MessageService {
 
         return messages
                 .stream()
+                .sorted(Comparator.comparing(MessageEntity::getCreatedAt))
                 .map(messageEntity -> new MessageResDto(
                         messageEntity.getId(),
                         messageEntity.getFrom().getId(),
@@ -145,7 +145,7 @@ public class MessageService {
         conversationRepo.save(conversation);
     }
 
-    public void sendMessageByConversationId(UUID conversationId, SendMessageDto messageInfo) {
+    public MessageDto sendMessageByConversationId(UUID conversationId, SendMessageDto messageInfo) {
         if (messageInfo.getMessage() == null || messageInfo.getMessage().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Message cannot be empty");
         }
@@ -173,6 +173,16 @@ public class MessageService {
         }
 
         messageRepository.save(message);
+
+        MessageDto messageDto = new MessageDto();
+
+        messageDto.setUserId(userEntity.getId());
+        messageDto.setMessage(message.getMesssages());
+        // messageDto.setFilePaths(message.getFiles());
+        messageDto.setName(userEntity.getFullName());
+        messageDto.setTimestamp(message.getCreatedAt());
+
+        return messageDto;
     }
 
     public void createBookingRequestMessage(UserEntity user, BookingReqDto bookingInfo, PropertyEntity property) {

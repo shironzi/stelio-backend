@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.aaronjosh.real_estate_app.dto.message.ChatHeadDto;
 import com.aaronjosh.real_estate_app.dto.message.ConversationReqDto;
+import com.aaronjosh.real_estate_app.dto.message.MessageDto;
 import com.aaronjosh.real_estate_app.dto.message.MessageResDto;
 import com.aaronjosh.real_estate_app.dto.message.SendMessageDto;
 import com.aaronjosh.real_estate_app.services.MessageService;
@@ -57,8 +58,9 @@ public class MessageController {
     @PostMapping("/{conversationId}")
     public ResponseEntity<?> sendMessage(@Valid @PathVariable UUID conversationId,
             @RequestBody SendMessageDto messageInfo) {
-        messageService.sendMessageByConversationId(conversationId, messageInfo);
 
-        return ResponseEntity.ok(Map.of("success", true, "message", "Successfully send a message"));
+        MessageDto message = messageService.sendMessageByConversationId(conversationId, messageInfo);
+
+        return ResponseEntity.ok(Map.of("success", true, "message", message));
     }
 }
