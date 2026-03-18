@@ -28,7 +28,6 @@ import com.aaronjosh.real_estate_app.repositories.BookingRepo;
 import com.aaronjosh.real_estate_app.repositories.PropertyRepository;
 import com.aaronjosh.real_estate_app.repositories.UserRepository;
 import com.aaronjosh.real_estate_app.services.listeners.BookingMessageListener;
-import com.aaronjosh.real_estate_app.util.DateTimeUtils;
 import com.aaronjosh.real_estate_app.util.LinkGenerator;
 
 import jakarta.transaction.Transactional;
@@ -174,6 +173,7 @@ public class BookingService {
     }
 
     // Requesting for booking a property with a Pending for approval
+    @Transactional
     public String requestBooking(UUID propertyId, BookingReqDto bookingInfo) {
         UserDetails user = userService.getUserDetails();
 
@@ -194,21 +194,18 @@ public class BookingService {
             } else {
                 // Booking exists, but it's for a different user
                 throw new ResponseStatusException(HttpStatus.CONFLICT,
-                        "Sorry, the booking isn’t available on your selected date.");
+                        "Sorry, the property isn’t available on your selected time.");
             }
         }
 
         // Check for booking date conflicts
-        List<BookingEntity> existingBookings = bookingRepo.findOverlappingBookings(property.getId(),
-                bookingInfo.getEnd(), bookingInfo.getStart());
+        List<BookingEntity> overlapping = bookingRepo.findOverlappingBookingsForUpdate(property.getId(),
+                bookingInfo.getEnd(), bookingInfo.getStart(), BookingStatus.CONFIRMED);
 
-        if (!existingBookings.isEmpty()) {
-            String startFormatted = DateTimeUtils.formatLongDateTime(bookingInfo.getStart());
-            String endFormatted = DateTimeUtils.formatLongDateTime(bookingInfo.getEnd());
-
+        if (!overlapping.isEmpty()) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
-                    "The property is not available from " + startFormatted + " to " + endFormatted);
+                    "The property is not available for the selected time.");
         }
 
         UserEntity userEntity = userRepo.findById(user.getId())
@@ -236,6 +233,7 @@ public class BookingService {
     }
 
     // cancel booking from renters
+    @Transactional
     public void cancelBooking(UUID bookingId) {
         BookingEntity booking = bookingRepo.findById(bookingId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Booking not found."));
@@ -245,6 +243,7 @@ public class BookingService {
         bookingRepo.save(booking);
     }
 
+    @Transactional
     public void updateBookingStatus(UUID bookingId, BookingStatus status) {
         BookingEntity booking = bookingRepo.findById(Objects.requireNonNull(bookingId, "bookingId must not be null"))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Booking not found."));
@@ -259,7 +258,7 @@ public class BookingService {
 
         // Allow only pending bookings to be updated
         if (booking.getStatus() != BookingStatus.PENDING_APPROVAL
-                || booking.getStatus() != BookingStatus.PENDING_PAYMENT) {
+                && booking.getStatus() != BookingStatus.PENDING_PAYMENT) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only pending bookings can be updated");
         }
 
@@ -269,19 +268,18 @@ public class BookingService {
         }
 
         // checks if there was conflict on schedules
-        List<BookingEntity> existingBookings = bookingRepo.findOverlappingBookings(property.getId(),
-                booking.getEndDateTime(), booking.getStartDateTime());
+        List<BookingEntity> overlapping = bookingRepo.findOverlappingBookingsForUpdate(property.getId(),
+                booking.getEndDateTime(), booking.getStartDateTime(), BookingStatus.CONFIRMED);
 
         // allows rejecting of bookings
-        if (!existingBookings.isEmpty() && status.equals(BookingStatus.CONFIRMED)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "There was already a scheduled");
+        if (!overlapping.isEmpty() && status.equals(BookingStatus.CONFIRMED)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Property have conflict schedule");
         }
 
         booking.setStatus(status);
         bookingRepo.save(booking);
     }
 
-    @Transactional
     public List<PropertyBookingResDto> getPropertyBookingsByPropertyId(UUID propertyId) {
 
         // checks the ownership of property

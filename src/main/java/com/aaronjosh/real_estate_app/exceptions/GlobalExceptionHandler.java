@@ -1,10 +1,15 @@
 package com.aaronjosh.real_estate_app.exceptions;
 
+import org.springframework.dao.CannotAcquireLockException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
+
+import jakarta.persistence.PessimisticLockException;
+
 import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import java.time.LocalDateTime;
@@ -57,5 +62,17 @@ public class GlobalExceptionHandler {
                 body.put("message", ex.getReason());
 
                 return new ResponseEntity<>(body, ex.getStatusCode());
+        }
+
+        @ExceptionHandler({
+                        DataIntegrityViolationException.class,
+                        PessimisticLockException.class,
+                        CannotAcquireLockException.class
+        })
+        public ResponseEntity<?> handleConflictExceptions(Exception ex) {
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                                .body(Map.of(
+                                                "error", "Conflict",
+                                                "message", "Conflict detected. Please try again."));
         }
 }
