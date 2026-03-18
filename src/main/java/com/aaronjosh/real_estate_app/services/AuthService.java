@@ -39,13 +39,8 @@ public class AuthService {
      * - Validates password confirmation.
      * - Hashes password before saving.
      */
+    @Transactional
     public UserEntity register(RegisterReqDto user) {
-
-        System.out.println("Testing the register");
-        // checking if the email is already exists
-        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
-            throw new EmailAlreadyExistsException("Email already exists");
-        }
 
         if (!user.getPassword().equals(user.getConfirmPassword())) {
             throw new PasswordNotMatchException("Passwords do not match");
@@ -90,7 +85,6 @@ public class AuthService {
         loginData.setId(user.getId());
 
         return loginData;
-
     }
 
     public void logout(HttpServletRequest request) {
