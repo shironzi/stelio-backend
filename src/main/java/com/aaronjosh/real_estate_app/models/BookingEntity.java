@@ -13,6 +13,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
@@ -22,7 +23,10 @@ import lombok.Data;
 
 @Entity
 @Data
-@Table(name = "bookings")
+@Table(name = "bookings", indexes = {
+        @Index(name = "idx_property_booking_dates", columnList = "property_id, startDateTime, endDateTime")
+})
+
 public class BookingEntity {
     public enum BookingStatus {
         CANCELLED, // User or system cancelled

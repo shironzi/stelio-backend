@@ -40,8 +40,6 @@ public class AuthService {
      * - Hashes password before saving.
      */
     public UserEntity register(RegisterReqDto user) {
-
-        System.out.println("Testing the register");
         // checking if the email is already exists
         if (userRepository.findByEmail(user.getEmail()).isPresent()) {
             throw new EmailAlreadyExistsException("Email already exists");
