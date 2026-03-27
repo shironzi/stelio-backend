@@ -61,7 +61,7 @@ public class MessageService {
     public List<ChatHeadDto> getChatHeads() {
         UserDetails user = userService.getUserDetails();
 
-        List<ConversationEntity> conversations = conversationRepo.findConversationsByParticipantId(user.getId());
+        List<ConversationEntity> conversations = conversationRepo.findByParticipantsWhoJoinedId(user.getId());
 
         List<ChatHeadDto> dtos = new ArrayList<>();
 
@@ -77,7 +77,13 @@ public class MessageService {
                 dto.setDate(latestMessage.getCreatedAt());
             }
 
-            dto.setChatName(convo.getConversationName());
+            String conversationName = convo.getParticipants().stream()
+                    .filter(participant -> !participant.getWhoJoined().getId().equals(user.getId()))
+                    .map(participant -> participant.getWhoJoined().getFullName())
+                    .findFirst()
+                    .orElse(null);
+
+            dto.setChatName(conversationName != null ? conversationName : convo.getConversationName());
             dto.setProfileLink(null);
             dto.setConversationId(convo.getId());
 
