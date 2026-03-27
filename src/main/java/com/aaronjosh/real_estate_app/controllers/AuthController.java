@@ -91,7 +91,9 @@ public class AuthController {
                     "success", true,
                     "message", "Token is valid",
                     "role", user.getRole(),
-                    "name", user.getFirstname() + user.getLastname(), "email", user.getEmail()));
+                    "name", user.getFirstname() + user.getLastname(),
+                    "email", user.getEmail(),
+                    "id", user.getId()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
