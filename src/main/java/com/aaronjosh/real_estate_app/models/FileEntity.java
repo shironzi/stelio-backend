@@ -35,7 +35,7 @@ public class FileEntity {
     private LocalDateTime updatedAt;
 
     @Lob
-    @Column(name = "data", nullable = false, columnDefinition = "LONGBLOB")
+    @Column(name = "data", nullable = false)
     private byte[] data;
 
     public FileEntity() {
@@ -57,7 +57,7 @@ public class FileEntity {
 
     @PrePersist
     protected void onCreate() {
-        createdAt  = LocalDateTime.now();
+        createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
 
         if (propertyEntity == null && message == null) {
