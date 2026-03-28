@@ -4,6 +4,8 @@
 
 package com.aaronjosh.real_estate_app.services;
 
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -41,6 +43,9 @@ public class AuthService {
      */
     @Transactional
     public UserEntity register(RegisterReqDto user) {
+        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
+            throw new EmailAlreadyExistsException("Email is already taken");
+        }
 
         if (!user.getPassword().equals(user.getConfirmPassword())) {
             throw new PasswordNotMatchException("Passwords do not match");
