@@ -7,6 +7,7 @@ package com.aaronjosh.real_estate_app.services;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -60,7 +61,11 @@ public class AuthService {
         // hashing the password with bcrypt
         newUser.setPassword(passwordEncoder.encode(user.getPassword()));
 
-        return userRepository.save(newUser);
+        try {
+            return userRepository.save(newUser);
+        } catch (DataIntegrityViolationException e) {
+            throw new EmailAlreadyExistsException("Email was taken just now!");
+        }
     }
 
     /*
