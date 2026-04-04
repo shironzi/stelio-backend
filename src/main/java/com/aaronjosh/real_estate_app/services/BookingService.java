@@ -8,7 +8,6 @@ import java.util.Optional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -28,7 +27,6 @@ import com.aaronjosh.real_estate_app.repositories.BookingRepo;
 import com.aaronjosh.real_estate_app.repositories.PropertyRepository;
 import com.aaronjosh.real_estate_app.repositories.UserRepository;
 import com.aaronjosh.real_estate_app.services.listeners.BookingMessageListener;
-import com.aaronjosh.real_estate_app.util.LinkGenerator;
 
 import jakarta.transaction.Transactional;
 
@@ -49,9 +47,6 @@ public class BookingService {
 
     @Autowired
     private BookingMessageListener eventPublisher;
-
-    @Autowired
-    private LinkGenerator linkGenerator;
 
     // returns bookings from a user.
     public List<BookingResDto> getBookings() {
@@ -91,9 +86,12 @@ public class BookingService {
                     dto.setCity(booking.getProperty().getCity());
                     dto.setExpiresAt(booking.getExpiresAt());
 
-                    dto.setImages(booking.getProperty().getImages().stream()
-                            .map(image -> linkGenerator.generateLink(image))
-                            .collect(Collectors.toList()));
+                    // dto.setImages(booking.getProperty().getImages().stream()
+                    // .map(image -> ServletUriComponentsBuilder.fromCurrentContextPath()
+                    // .path("/api/image/")
+                    // .path(Objects.requireNonNull(image.getId().toString()))
+                    // .toUriString())
+                    // .collect(Collectors.toList()));
 
                     return dto;
                 }).toList();
@@ -131,9 +129,12 @@ public class BookingService {
                     dto.setAddress(booking.getProperty().getAddress());
                     dto.setCity(booking.getProperty().getCity());
 
-                    dto.setImages(booking.getProperty().getImages().stream()
-                            .map(image -> linkGenerator.generateLink(image))
-                            .collect(Collectors.toList()));
+                    // dto.setImages(booking.getProperty().getImages().stream()
+                    // .map(image -> ServletUriComponentsBuilder.fromCurrentContextPath()
+                    // .path("/api/image/")
+                    // .path(Objects.requireNonNull(image.getId().toString()))
+                    // .toUriString())
+                    // .collect(Collectors.toList()));
 
                     return dto;
                 }).toList();

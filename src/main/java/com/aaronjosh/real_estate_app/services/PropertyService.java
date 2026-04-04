@@ -22,6 +22,7 @@ import com.aaronjosh.real_estate_app.models.UserEntity;
 import com.aaronjosh.real_estate_app.models.PropertyEntity.PropertyStatus;
 import com.aaronjosh.real_estate_app.repositories.PropertyRepository;
 import com.aaronjosh.real_estate_app.repositories.UserRepository;
+import com.aaronjosh.real_estate_app.util.CloudflareR2Service;
 import com.aaronjosh.real_estate_app.util.PropertyMapper;
 import com.aaronjosh.real_estate_app.util.PropertyMapperWithSchedules;
 
@@ -43,6 +44,9 @@ public class PropertyService {
 
     @Autowired
     private PropertyMapperWithSchedules propertyMapperWithSchedules;
+
+    @Autowired
+    private CloudflareR2Service cloudflareR2Service;
 
     // get all active properties
     @Transactional(readOnly = true)
@@ -94,11 +98,15 @@ public class PropertyService {
             try {
                 FileEntity file = new FileEntity();
 
-                file.setName(image.getOriginalFilename());
-                file.setType(image.getContentType());
-                file.setData(image.getBytes());
+                String key = cloudflareR2Service.uploadFile(image, true);
 
+                file.setFilename(image.getOriginalFilename());
+                file.setType(image.getContentType());
+                file.setSize(image.getSize());
+                file.setContentType(image.getContentType());
+                file.setKey(key);
                 file.setPropertyEntity(property);
+
                 property.getImages().add(file);
             } catch (java.io.IOException e) {
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to process image file", e);
@@ -155,17 +163,18 @@ public class PropertyService {
                 try {
                     FileEntity file = new FileEntity();
 
-                    file.setName(image.getOriginalFilename());
-                    file.setType(image.getContentType());
-                    file.setData(image.getBytes());
+                    String key = cloudflareR2Service.uploadFile(image, true);
 
-                    property.getImages().add(file);
+                    file.setFilename(image.getOriginalFilename());
+                    file.setType(image.getContentType());
+                    file.setSize(image.getSize());
+                    file.setContentType(image.getContentType());
+                    file.setKey(key);
                     file.setPropertyEntity(property);
 
+                    property.getImages().add(file);
                 } catch (java.io.IOException e) {
-                    throw new ResponseStatusException(
-                            HttpStatus.INTERNAL_SERVER_ERROR,
-                            "Failed to process image file",
+                    throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to process image file",
                             e);
                 }
             }

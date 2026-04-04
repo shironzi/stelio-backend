@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.aaronjosh.real_estate_app.dto.auth.UserDetails;
 import com.aaronjosh.real_estate_app.dto.booking.BookingReqDto;
@@ -30,7 +31,6 @@ import com.aaronjosh.real_estate_app.repositories.MessageRepository;
 import com.aaronjosh.real_estate_app.repositories.ParticipantRepo;
 import com.aaronjosh.real_estate_app.repositories.UserRepository;
 import com.aaronjosh.real_estate_app.util.BookingMessageTemplate;
-import com.aaronjosh.real_estate_app.util.LinkGenerator;
 
 @Service
 public class MessageService {
@@ -48,9 +48,6 @@ public class MessageService {
 
     @Autowired
     private FileService fileService;
-
-    @Autowired
-    private LinkGenerator linkGenerator;
 
     @Autowired
     private ParticipantRepo participantRepo;
@@ -111,7 +108,10 @@ public class MessageService {
                         messageEntity.getFrom().getFullName(),
                         messageEntity.getMesssages(),
                         messageEntity.getFiles().stream()
-                                .map(file -> linkGenerator.generateLink(file))
+                                .map(file -> ServletUriComponentsBuilder.fromCurrentContextPath()
+                                        .path("/api/image/")
+                                        .path(file.getId().toString())
+                                        .toUriString())
                                 .toArray(String[]::new),
                         messageEntity.getCreatedAt()))
                 .collect(Collectors.toList());
@@ -170,13 +170,13 @@ public class MessageService {
         message.setConversation(conversation);
         message.setFrom(userEntity);
 
-        if (messageInfo.getFiles() != null && !messageInfo.getFiles().isEmpty()) {
-            List<FileEntity> files = messageInfo.getFiles().stream()
-                    .map(file -> fileService.mapToFileEntity(file, message))
-                    .collect(Collectors.toList());
+        // if (messageInfo.getFiles() != null && !messageInfo.getFiles().isEmpty()) {
+        // List<FileEntity> files = messageInfo.getFiles().stream()
+        // .map(file -> fileService.mapToFileEntity(file, message))
+        // .collect(Collectors.toList());
 
-            message.setFiles(files);
-        }
+        // message.setFiles(files);
+        // }
 
         messageRepository.save(message);
 

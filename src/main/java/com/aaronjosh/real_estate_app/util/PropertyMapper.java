@@ -6,6 +6,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -24,13 +25,13 @@ public class PropertyMapper {
     @Autowired
     private FavoriteRepository favoriteRepository;
 
+    @Value("${CLOUDFLARE_R2_PUBLIC_URL}")
+    private String publicUrl;
+
     public PropertyResDto toDto(PropertyEntity property) {
         List<ImageDto> images = new ArrayList<>();
         property.getImages().forEach(image -> {
-            String imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
-                    .path("/api/image/")
-                    .path(Objects.requireNonNull(image.getId().toString()))
-                    .toUriString();
+            String imageUrl = publicUrl + "/" + image.getKey();
 
             ImageDto imageDto = new ImageDto();
             imageDto.setId(image.getId());

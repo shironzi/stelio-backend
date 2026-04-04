@@ -18,11 +18,12 @@ public class FileController {
     @Autowired
     private FileService fileService;
 
-    @GetMapping("{id}")
-    public ResponseEntity<?> getImage(@PathVariable UUID id) {
+    // @GetMapping("{id}")
+    // public ResponseEntity<?> getImage(@PathVariable UUID id) {
 
-        var image = fileService.getImageById(id);
+    // var image = fileService.getImageById(id);
 
-        return ResponseEntity.ok().contentType(MediaType.valueOf(image.getType())).body(image.getData());
-    }
+    // return
+    // ResponseEntity.ok().contentType(MediaType.valueOf(image.getType())).body(image.getData());
+    // }
 }
