@@ -2,10 +2,13 @@ package com.aaronjosh.real_estate_app.dto.property;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
+
+import org.springframework.web.multipart.MultipartFile;
 
 import com.aaronjosh.real_estate_app.models.PropertyEntity.PropertyType;
 
-import jakarta.validation.Valid;
+import jakarta.persistence.Column;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -43,7 +46,9 @@ public class UpdatePropertyDto {
     @NotBlank(message = "City is required")
     private String city;
 
-    private List<@Valid ExistingImagesDto> existingImages;
+    @Column(nullable = true)
+    private MultipartFile[] newImages;
 
-    private List<@Valid NewImagesDto> newImages;
+    @Column(nullable = true)
+    private List<UUID> removedImages;
 }

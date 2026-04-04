@@ -23,7 +23,7 @@ public class PropertyResDto {
     private String address;
     private String City;
     private PropertyStatus status;
-    private List<String> image;
+    private List<ImageDto> images;
     private Boolean isFavorite;
     private List<DateRange> bookings;
 }

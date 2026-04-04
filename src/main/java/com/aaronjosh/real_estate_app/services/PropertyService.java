@@ -90,7 +90,7 @@ public class PropertyService {
         property.setStatus(PropertyStatus.ACTIVE);
 
         // adding the relation of images to property
-        for (MultipartFile image : propertyDto.getImage()) {
+        for (MultipartFile image : propertyDto.getImages()) {
             try {
                 FileEntity file = new FileEntity();
 
@@ -117,6 +117,7 @@ public class PropertyService {
         return propertyRepo.save(property);
     }
 
+    @Transactional
     public PropertyEntity editProperty(UpdatePropertyDto propertyDto, UUID propertyId) {
         UserDetails user = userService.getUserDetails();
 
@@ -131,6 +132,7 @@ public class PropertyService {
             throw new RuntimeException("You dont have access");
         }
 
+        // Updates property details
         property.setTitle(propertyDto.getTitle());
         property.setDescription(propertyDto.getDescription());
         property.setPrice(propertyDto.getPrice());
@@ -141,6 +143,33 @@ public class PropertyService {
         property.setTotalBath(propertyDto.getTotalBath());
         property.setAddress(propertyDto.getAddress());
         property.setCity(propertyDto.getCity());
+
+        // Removes deleted images
+        if (propertyDto.getRemovedImages() != null) {
+            property.getImages().removeIf(image -> propertyDto.getRemovedImages().contains(image.getId()));
+        }
+
+        // Adds new images
+        if (propertyDto.getNewImages() != null) {
+            for (MultipartFile image : propertyDto.getNewImages()) {
+                try {
+                    FileEntity file = new FileEntity();
+
+                    file.setName(image.getOriginalFilename());
+                    file.setType(image.getContentType());
+                    file.setData(image.getBytes());
+
+                    property.getImages().add(file);
+                    file.setPropertyEntity(property);
+
+                } catch (java.io.IOException e) {
+                    throw new ResponseStatusException(
+                            HttpStatus.INTERNAL_SERVER_ERROR,
+                            "Failed to process image file",
+                            e);
+                }
+            }
+        }
 
         return propertyRepo.save(property);
     }

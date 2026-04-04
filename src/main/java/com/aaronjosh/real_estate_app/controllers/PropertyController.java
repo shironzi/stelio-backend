@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.aaronjosh.real_estate_app.dto.booking.PropertyBookingResDto;
@@ -76,10 +75,10 @@ public class PropertyController {
                 .body(Map.of("success", true, "message", "Property created Successfully"));
     }
 
-    @PostMapping("/{propertyId}")
+    @PostMapping(value = "/{propertyId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('OWNER')")
     public ResponseEntity<?> editProperty(@PathVariable UUID propertyId,
-            @RequestBody UpdatePropertyDto propertyDto) {
+            @ModelAttribute UpdatePropertyDto propertyDto) {
         propertyService.editProperty(propertyDto, propertyId);
 
         return ResponseEntity.ok(Map.of("success", true, "message", "Property Updated Successfully"));

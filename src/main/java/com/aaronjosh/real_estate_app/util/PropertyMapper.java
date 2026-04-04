@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.aaronjosh.real_estate_app.dto.auth.UserDetails;
+import com.aaronjosh.real_estate_app.dto.property.ImageDto;
 import com.aaronjosh.real_estate_app.dto.property.PropertyResDto;
 import com.aaronjosh.real_estate_app.models.PropertyEntity;
 import com.aaronjosh.real_estate_app.repositories.FavoriteRepository;
@@ -24,18 +25,17 @@ public class PropertyMapper {
     private FavoriteRepository favoriteRepository;
 
     public PropertyResDto toDto(PropertyEntity property) {
-        // List of image links
-        List<String> images = new ArrayList<>();
-
-        // Generate url for each image
-
+        List<ImageDto> images = new ArrayList<>();
         property.getImages().forEach(image -> {
             String imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
                     .path("/api/image/")
                     .path(Objects.requireNonNull(image.getId().toString()))
                     .toUriString();
 
-            images.add(imageUrl);
+            ImageDto imageDto = new ImageDto();
+            imageDto.setId(image.getId());
+            imageDto.setUrl(imageUrl);
+            images.add(imageDto);
         });
 
         // Create a new dto instance
@@ -54,7 +54,7 @@ public class PropertyMapper {
         dto.setTotalBed(property.getTotalBed());
         dto.setTotalBedroom(property.getTotalBedroom());
         dto.setStatus(property.getStatus());
-        dto.setImage(images);
+        dto.setImages(images);
 
         // Get the current user details
         UserDetails user = userService.getUserDetails();
@@ -72,8 +72,8 @@ public class PropertyMapper {
         return dto;
     }
 
-    public List<PropertyResDto> toDto(List<PropertyEntity> entities) {
+    public List<PropertyResDto> toDto(List<PropertyEntity> properties) {
         // Map each entity to a DTO using the single entity toDto method
-        return entities.stream().map(this::toDto).collect(Collectors.toList());
+        return properties.stream().map(this::toDto).collect(Collectors.toList());
     }
 }

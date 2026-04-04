@@ -81,7 +81,7 @@ public class PropertyEntity {
     @Enumerated(EnumType.STRING)
     private PropertyStatus status = PropertyStatus.ACTIVE;
 
-    @OneToMany(mappedBy = "propertyEntity", cascade = CascadeType.PERSIST, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "propertyEntity", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<FileEntity> images = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
