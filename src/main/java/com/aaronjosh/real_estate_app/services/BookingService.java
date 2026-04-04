@@ -3,6 +3,7 @@ package com.aaronjosh.real_estate_app.services;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.Objects;
 import java.util.Optional;
 import java.math.BigDecimal;
@@ -10,6 +11,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -47,6 +49,9 @@ public class BookingService {
 
     @Autowired
     private BookingMessageListener eventPublisher;
+
+    @Value("${CLOUDFLARE_R2_PUBLIC_URL}")
+    private String publicUrl;
 
     // returns bookings from a user.
     public List<BookingResDto> getBookings() {
@@ -86,12 +91,9 @@ public class BookingService {
                     dto.setCity(booking.getProperty().getCity());
                     dto.setExpiresAt(booking.getExpiresAt());
 
-                    // dto.setImages(booking.getProperty().getImages().stream()
-                    // .map(image -> ServletUriComponentsBuilder.fromCurrentContextPath()
-                    // .path("/api/image/")
-                    // .path(Objects.requireNonNull(image.getId().toString()))
-                    // .toUriString())
-                    // .collect(Collectors.toList()));
+                    dto.setImages(booking.getProperty().getImages().stream()
+                            .map(image -> publicUrl + "/" + image.getKey())
+                            .collect(Collectors.toList()));
 
                     return dto;
                 }).toList();
@@ -129,12 +131,9 @@ public class BookingService {
                     dto.setAddress(booking.getProperty().getAddress());
                     dto.setCity(booking.getProperty().getCity());
 
-                    // dto.setImages(booking.getProperty().getImages().stream()
-                    // .map(image -> ServletUriComponentsBuilder.fromCurrentContextPath()
-                    // .path("/api/image/")
-                    // .path(Objects.requireNonNull(image.getId().toString()))
-                    // .toUriString())
-                    // .collect(Collectors.toList()));
+                    dto.setImages(booking.getProperty().getImages().stream()
+                            .map(image -> publicUrl + "/" + image.getKey())
+                            .collect(Collectors.toList()));
 
                     return dto;
                 }).toList();
