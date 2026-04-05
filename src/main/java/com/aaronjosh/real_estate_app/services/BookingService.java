@@ -1,17 +1,18 @@
 package com.aaronjosh.real_estate_app.services;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.Objects;
-import java.util.Optional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -58,45 +59,46 @@ public class BookingService {
         UserDetails user = userService.getUserDetails();
         LocalDateTime now = LocalDateTime.now();
 
-        List<BookingResDto> bookings = bookingRepo.findByUser_id(user.getId()).stream().map(
-                (booking) -> {
-                    BookingResDto dto = new BookingResDto();
+        List<BookingResDto> bookings = bookingRepo.findByUser_id(user.getId(), Sort.by("createdAt").descending())
+                .stream().map(
+                        (booking) -> {
+                            BookingResDto dto = new BookingResDto();
 
-                    // Booking fields
-                    dto.setId(booking.getId());
-                    dto.setPaymentStatus(booking.getPaymentStatus().toString());
-                    dto.setStart(booking.getStartDateTime());
-                    dto.setEnd(booking.getEndDateTime());
-                    dto.setGuestNames(booking.getGuestNames());
-                    dto.setTotalGuests(booking.getTotalGuests());
-                    dto.setContactPhone(booking.getContactPhone());
+                            // Booking fields
+                            dto.setId(booking.getId());
+                            dto.setPaymentStatus(booking.getPaymentStatus().toString());
+                            dto.setStart(booking.getStartDateTime());
+                            dto.setEnd(booking.getEndDateTime());
+                            dto.setGuestNames(booking.getGuestNames());
+                            dto.setTotalGuests(booking.getTotalGuests());
+                            dto.setContactPhone(booking.getContactPhone());
 
-                    if (now.isAfter(booking.getExpiresAt())) {
-                        dto.setStatus(BookingStatus.EXPIRED.toString());
-                    } else {
-                        dto.setStatus(booking.getStatus().toString());
-                    }
+                            if (now.isAfter(booking.getExpiresAt())) {
+                                dto.setStatus(BookingStatus.EXPIRED.toString());
+                            } else {
+                                dto.setStatus(booking.getStatus().toString());
+                            }
 
-                    // Property fields
-                    dto.setPropertyId(booking.getProperty().getId());
-                    dto.setTitle(booking.getProperty().getTitle());
-                    dto.setDescription(booking.getProperty().getDescription());
-                    dto.setPrice(booking.getProperty().getPrice());
-                    dto.setPropertyType(booking.getProperty().getPropertyType().toString());
-                    dto.setMaxGuest(booking.getProperty().getMaxGuest());
-                    dto.setTotalBedroom(booking.getProperty().getTotalBedroom());
-                    dto.setTotalBed(booking.getProperty().getTotalBed());
-                    dto.setTotalBath(booking.getProperty().getTotalBath());
-                    dto.setAddress(booking.getProperty().getAddress());
-                    dto.setCity(booking.getProperty().getCity());
-                    dto.setExpiresAt(booking.getExpiresAt());
+                            // Property fields
+                            dto.setPropertyId(booking.getProperty().getId());
+                            dto.setTitle(booking.getProperty().getTitle());
+                            dto.setDescription(booking.getProperty().getDescription());
+                            dto.setPrice(booking.getProperty().getPrice());
+                            dto.setPropertyType(booking.getProperty().getPropertyType().toString());
+                            dto.setMaxGuest(booking.getProperty().getMaxGuest());
+                            dto.setTotalBedroom(booking.getProperty().getTotalBedroom());
+                            dto.setTotalBed(booking.getProperty().getTotalBed());
+                            dto.setTotalBath(booking.getProperty().getTotalBath());
+                            dto.setAddress(booking.getProperty().getAddress());
+                            dto.setCity(booking.getProperty().getCity());
+                            dto.setExpiresAt(booking.getExpiresAt());
 
-                    dto.setImages(booking.getProperty().getImages().stream()
-                            .map(image -> publicUrl + "/" + image.getKey())
-                            .collect(Collectors.toList()));
-
-                    return dto;
-                }).toList();
+                            dto.setImages(booking.getProperty().getImages().stream()
+                                    .map(image -> publicUrl + "/" + image.getKey())
+                                    .collect(Collectors.toList()));
+                            return dto;
+                        })
+                .toList();
 
         return bookings;
     }
@@ -174,33 +176,18 @@ public class BookingService {
 
     // Requesting for booking a property with a Pending for approval
     @Transactional
-    public String requestBooking(UUID propertyId, BookingReqDto bookingInfo) {
+    public String book(UUID propertyId, BookingReqDto bookingInfo) {
         UserDetails user = userService.getUserDetails();
 
-        // Property details
-        PropertyEntity property = propertyRepo.findById(Objects.requireNonNull(propertyId))
+        // Find property and lock
+        PropertyEntity property = propertyRepo.findAndLockById(Objects.requireNonNull(propertyId))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "property not found"));
 
-        LocalDateTime now = LocalDateTime.now();
-
-        // Checks pending booking
-        Optional<BookingEntity> activeBooking = bookingRepo.findByStatusInAndExpiresAtBefore(
-                List.of(BookingStatus.PENDING_APPROVAL, BookingStatus.PENDING_PAYMENT), now, propertyId);
-
-        if (activeBooking.isPresent()) {
-            // Check if the booking belongs to the current user
-            if (activeBooking.get().getUser().getId() == user.getId()) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "You already have a pending booking.");
-            } else {
-                // Booking exists, but it's for a different user
-                throw new ResponseStatusException(HttpStatus.CONFLICT,
-                        "Sorry, the property isn’t available on your selected time.");
-            }
-        }
-
-        // Check for booking date conflicts
-        List<BookingEntity> overlapping = bookingRepo.findOverlappingBookingsForUpdate(property.getId(),
-                bookingInfo.getEnd(), bookingInfo.getStart(), BookingStatus.CONFIRMED);
+        // Check for booking conflicts
+        List<BookingEntity> overlapping = bookingRepo.findOverlappingBookingsForUpdate(
+                property.getId(),
+                bookingInfo.getStart(),
+                bookingInfo.getEnd());
 
         if (!overlapping.isEmpty()) {
             throw new ResponseStatusException(
@@ -230,6 +217,35 @@ public class BookingService {
         eventPublisher.handleBookingRequested(new BookingRequestedEvent(bookingInfo, userEntity, property));
 
         return "Successfully requested to book a property.";
+    }
+
+    @Transactional
+    public String reserve(UUID propertyId, BookingReqDto bookingInfo) {
+        UserDetails user = userService.getUserDetails();
+
+        UserEntity userEntity = userRepo.findById(user.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        PropertyEntity property = propertyRepo.findById(Objects.requireNonNull(propertyId))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "property not found"));
+
+        BookingEntity booking = new BookingEntity();
+        booking.setProperty(property);
+        booking.setStatus(BookingStatus.PENDING_APPROVAL);
+        booking.setUser(userEntity);
+        booking.setStartDateTime(bookingInfo.getStart());
+        booking.setEndDateTime(bookingInfo.getEnd());
+        booking.setContactPhone(bookingInfo.getContactPhone());
+        booking.setBalance(property.getPrice());
+
+        if (bookingInfo.getGuestNames() != null && !bookingInfo.getGuestNames().isEmpty()) {
+            booking.setGuestNames(bookingInfo.getGuestNames());
+            booking.setTotalGuests(bookingInfo.getGuestNames().size());
+        }
+
+        bookingRepo.save(booking);
+
+        return "Successfully request property reservation";
     }
 
     // cancel booking from renters
@@ -268,8 +284,10 @@ public class BookingService {
         }
 
         // checks if there was conflict on schedules
-        List<BookingEntity> overlapping = bookingRepo.findOverlappingBookingsForUpdate(property.getId(),
-                booking.getEndDateTime(), booking.getStartDateTime(), BookingStatus.CONFIRMED);
+        List<BookingEntity> overlapping = bookingRepo.findOverlappingBookingsForUpdate(
+                property.getId(),
+                booking.getStartDateTime(),
+                booking.getEndDateTime());
 
         // allows rejecting of bookings
         if (!overlapping.isEmpty() && status.equals(BookingStatus.CONFIRMED)) {
@@ -281,7 +299,6 @@ public class BookingService {
     }
 
     public List<PropertyBookingResDto> getPropertyBookingsByPropertyId(UUID propertyId) {
-
         // checks the ownership of property
         UserDetails user = userService.getUserDetails();
         PropertyEntity property = propertyRepo.findById(propertyId)

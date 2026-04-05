@@ -60,13 +60,21 @@ public class BookingController {
     }
 
     @PreAuthorize("hasRole('RENTER')")
-    @PostMapping("/{propertyId}")
-    public ResponseEntity<?> requestBooking(@RequestHeader("Idempotency-Key") String idempotencyKey,
+    @PostMapping("/{propertyId}/book")
+    public ResponseEntity<?> book(@RequestHeader("Idempotency-Key") String idempotencyKey,
             @Valid @PathVariable UUID propertyId, @RequestBody BookingReqDto booking) {
 
-        // Creating a booking and handle Idempotency
         return idempService.handle(idempotencyKey,
-                () -> bookingService.requestBooking(propertyId, booking));
+                () -> bookingService.book(propertyId, booking));
+    }
+
+    @PreAuthorize("hasRole('RENTER')")
+    @PostMapping("/{propertyId}/reserve")
+    public ResponseEntity<?> reserve(@RequestHeader("Idempotency-Key") String idempotencyKey,
+            @Valid @PathVariable UUID propertyId, @RequestBody BookingReqDto booking) {
+
+        return idempService.handle(idempotencyKey,
+                () -> bookingService.reserve(propertyId, booking));
     }
 
     @PreAuthorize("hasRole('OWNER')")
