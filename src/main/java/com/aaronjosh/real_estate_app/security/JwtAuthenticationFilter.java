@@ -10,9 +10,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.aaronjosh.real_estate_app.dto.auth.UserDetails;
-import com.aaronjosh.real_estate_app.models.UserEntity;
-
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -51,33 +48,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             final String jwt = authHeader.substring(7);
 
-            UserEntity user = jwtService.getUserByToken(jwt);
-
-            if (!jwtService.isAccessTokenValid(jwt, user)) {
+            if (!jwtService.isAccessTokenValid(jwt)) {
                 res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                res.getWriter().write("Invalid or expired token.");
+                res.getWriter().write("Invalid or Expired token.");
                 return;
             }
 
             if (SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails userDetails = new UserDetails();
-
-                userDetails.setId(user.getId());
-                userDetails.setEmail(user.getEmail());
-                userDetails.setFirstname(user.getFirstname());
-                userDetails.setLastname(user.getLastname());
-                userDetails.setRole(user.getRole());
 
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, user.getAuthorities());
+                        jwtService.extractUserDetails(jwt), null, jwtService.extractAuthorities(jwt));
 
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
 
             filterChain.doFilter(req, res);
-        } catch (JwtException | InsufficientAuthenticationException e) {
+        } catch (JwtException e) {
             res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             res.getWriter().write("Authentication failed: " + e.getMessage());
+        } catch (Exception e) {
+            res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            res.getWriter().write("Authentication failed");
         }
     }
 
