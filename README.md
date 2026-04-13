@@ -17,6 +17,12 @@ A real-estate rental platform backend where users can list and rent properties. 
 
 ---
 
+## 🏗️ System Architecture & Design
+
+![Alt text](images/High_Level_Diagram.png.png)
+
+---
+
 ## ⚙️ Core Features
 
 ### 1. Authentication & User Roles
@@ -83,6 +89,7 @@ PENDING_PAYMENT → PENDING_APPROVAL → CONFIRMED → COMPLETED
 ### 9. Automated Cleanup
 
 A scheduled task runs daily at **02:30 AM** to:
+
 - Delete expired idempotency records
 - Purge expired blacklisted JWT tokens
 
@@ -111,32 +118,33 @@ com/aaronjosh/real_estate_app/
 
 ### Data Model
 
-| Entity | Key Relationships |
-|---|---|
-| `users` | owns many `property`, has many `bookings`, `favorites`, `reviews`, `messages` |
-| `property` | belongs to a `users` (host), has many `bookings`, `files`, `favorites`, `reviews`, one `propertyStats` |
-| `bookings` | belongs to `property` and `users` (renter); indexed on `(property_id, startDateTime, endDateTime)` |
-| `conversations` | has many `participants` and `messages`; optionally linked to one `review` |
-| `messages` | sent by a `users`, belongs to a `conversation`, may have `files` |
-| `files` | stored on Cloudflare R2; associated with either a `property` or a `message` |
-| `propertyStats` | one-to-one with `property`; aggregates booking and earnings data |
-| `blacklistedTokens` | stores revoked JWTs until they expire |
-| `idempotency` | stores processed idempotency keys (24-hour TTL) |
+| Entity              | Key Relationships                                                                                      |
+| ------------------- | ------------------------------------------------------------------------------------------------------ |
+| `users`             | owns many `property`, has many `bookings`, `favorites`, `reviews`, `messages`                          |
+| `property`          | belongs to a `users` (host), has many `bookings`, `files`, `favorites`, `reviews`, one `propertyStats` |
+| `bookings`          | belongs to `property` and `users` (renter); indexed on `(property_id, startDateTime, endDateTime)`     |
+| `conversations`     | has many `participants` and `messages`; optionally linked to one `review`                              |
+| `messages`          | sent by a `users`, belongs to a `conversation`, may have `files`                                       |
+| `files`             | stored on Cloudflare R2; associated with either a `property` or a `message`                            |
+| `propertyStats`     | one-to-one with `property`; aggregates booking and earnings data                                       |
+| `blacklistedTokens` | stores revoked JWTs until they expire                                                                  |
+| `idempotency`       | stores processed idempotency keys (24-hour TTL)                                                        |
 
 ---
 
 ## 🔒 Security
 
-| Concern | Approach |
-|---|---|
-| Authentication | JWT (HMAC-SHA256), 24-hour expiry, `Authorization: Bearer <token>` |
-| Token revocation | Blacklist table checked on every request |
-| Password storage | BCrypt hashing |
-| Session management | Stateless (no server-side sessions) |
-| Concurrency safety | Pessimistic lock on overlapping booking query |
-| Idempotency | Per-user idempotency key with 24-hour TTL |
+| Concern            | Approach                                                           |
+| ------------------ | ------------------------------------------------------------------ |
+| Authentication     | JWT (HMAC-SHA256), 24-hour expiry, `Authorization: Bearer <token>` |
+| Token revocation   | Blacklist table checked on every request                           |
+| Password storage   | BCrypt hashing                                                     |
+| Session management | Stateless (no server-side sessions)                                |
+| Concurrency safety | Pessimistic lock on overlapping booking query                      |
+| Idempotency        | Per-user idempotency key with 24-hour TTL                          |
 
 **Public endpoints** (no authentication required):
+
 - `POST /api/auth/login`
 - `POST /api/auth/register`
 - `GET /api/properties/`
@@ -149,92 +157,92 @@ com/aaronjosh/real_estate_app/
 
 ### Auth — `/api/auth`
 
-| Method | Path | Description |
-|---|---|---|
-| `POST` | `/login` | Authenticate and receive a JWT |
-| `POST` | `/register` | Create a new user account |
-| `POST` | `/logout` | Revoke the current JWT |
-| `POST` | `/verify` | Verify token and return user details |
+| Method | Path        | Description                          |
+| ------ | ----------- | ------------------------------------ |
+| `POST` | `/login`    | Authenticate and receive a JWT       |
+| `POST` | `/register` | Create a new user account            |
+| `POST` | `/logout`   | Revoke the current JWT               |
+| `POST` | `/verify`   | Verify token and return user details |
 
 ### Users — `/api/users`
 
-| Method | Path | Description |
-|---|---|---|
+| Method  | Path        | Description                      |
+| ------- | ----------- | -------------------------------- |
 | `PATCH` | `/{userId}` | Upgrade role from RENTER → OWNER |
 
 ### Properties — `/api/properties`
 
-| Method | Path | Role | Description |
-|---|---|---|---|
-| `GET` | `/` | Public | List all active properties |
-| `GET` | `/my-properties` | OWNER | List owner's properties |
-| `GET` | `/{propertyId}` | Public | Property details with booking schedule |
-| `GET` | `/{propertyId}/bookings` | OWNER | Bookings for a specific property |
-| `POST` | `/` | OWNER | Create property (`multipart/form-data`) |
-| `POST` | `/{propertyId}` | OWNER | Update property details / images |
-| `DELETE` | `/{propertyId}` | OWNER | Delete property |
+| Method   | Path                     | Role   | Description                             |
+| -------- | ------------------------ | ------ | --------------------------------------- |
+| `GET`    | `/`                      | Public | List all active properties              |
+| `GET`    | `/my-properties`         | OWNER  | List owner's properties                 |
+| `GET`    | `/{propertyId}`          | Public | Property details with booking schedule  |
+| `GET`    | `/{propertyId}/bookings` | OWNER  | Bookings for a specific property        |
+| `POST`   | `/`                      | OWNER  | Create property (`multipart/form-data`) |
+| `POST`   | `/{propertyId}`          | OWNER  | Update property details / images        |
+| `DELETE` | `/{propertyId}`          | OWNER  | Delete property                         |
 
 ### Bookings — `/api/bookings`
 
-| Method | Path | Role | Description |
-|---|---|---|---|
-| `GET` | `/` | Auth | RENTER: own bookings; OWNER: all property bookings |
-| `GET` | `/{bookingId}` | Auth | Get booking details |
-| `POST` | `/{propertyId}` | RENTER | Request a booking (requires `Idempotency-Key` header) |
-| `PATCH` | `/{bookingId}` | OWNER | Update booking status |
-| `PATCH` | `/{bookingId}/cancel` | RENTER | Cancel booking |
+| Method  | Path                  | Role   | Description                                           |
+| ------- | --------------------- | ------ | ----------------------------------------------------- |
+| `GET`   | `/`                   | Auth   | RENTER: own bookings; OWNER: all property bookings    |
+| `GET`   | `/{bookingId}`        | Auth   | Get booking details                                   |
+| `POST`  | `/{propertyId}`       | RENTER | Request a booking (requires `Idempotency-Key` header) |
+| `PATCH` | `/{bookingId}`        | OWNER  | Update booking status                                 |
+| `PATCH` | `/{bookingId}/cancel` | RENTER | Cancel booking                                        |
 
 ### Payments — `/api/payments`
 
-| Method | Path | Role | Description |
-|---|---|---|---|
+| Method | Path           | Role | Description                                |
+| ------ | -------------- | ---- | ------------------------------------------ |
 | `POST` | `/{bookingId}` | Auth | Process payment (min 30% on first payment) |
 
 ### Messages — `/api/messages`
 
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/` | List conversations (chat heads) |
-| `POST` | `/` | Create new conversation |
-| `GET` | `/{conversationId}` | Get messages in conversation |
-| `POST` | `/{conversationId}` | Send message |
+| Method | Path                | Description                     |
+| ------ | ------------------- | ------------------------------- |
+| `GET`  | `/`                 | List conversations (chat heads) |
+| `POST` | `/`                 | Create new conversation         |
+| `GET`  | `/{conversationId}` | Get messages in conversation    |
+| `POST` | `/{conversationId}` | Send message                    |
 
 ### Favourites — `/api/favorite`
 
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/{favoriteId}` | Check if favourite exists |
-| `POST` | `/{propertyId}` | Add to favourites |
-| `DELETE` | `/{propertyId}` | Remove from favourites |
+| Method   | Path            | Description               |
+| -------- | --------------- | ------------------------- |
+| `GET`    | `/{favoriteId}` | Check if favourite exists |
+| `POST`   | `/{propertyId}` | Add to favourites         |
+| `DELETE` | `/{propertyId}` | Remove from favourites    |
 
 ### Reviews — `/api/property/review`
 
-| Method | Path | Role | Description |
-|---|---|---|---|
-| `GET` | `/stats/{propertyId}` | OWNER | Get review stats for a property |
+| Method | Path                  | Role  | Description                     |
+| ------ | --------------------- | ----- | ------------------------------- |
+| `GET`  | `/stats/{propertyId}` | OWNER | Get review stats for a property |
 
 ### Property Stats — `/api/properties/stats`
 
-| Method | Path | Role | Description |
-|---|---|---|---|
-| `GET` | `/{propertyId}` | OWNER | Property dashboard statistics |
-| `GET` | `/calendar/{propertyId}` | OWNER | Booking calendar |
+| Method | Path                     | Role  | Description                   |
+| ------ | ------------------------ | ----- | ----------------------------- |
+| `GET`  | `/{propertyId}`          | OWNER | Property dashboard statistics |
+| `GET`  | `/calendar/{propertyId}` | OWNER | Booking calendar              |
 
 ---
 
 ## 💻 Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Language | Java 21 |
-| Framework | Spring Boot 3.5 |
-| Security | Spring Security + JJWT 0.12 |
-| Persistence | Spring Data JPA / Hibernate |
-| Database | PostgreSQL |
-| File Storage | Cloudflare R2 (AWS SDK v2) |
-| Validation | Jakarta Validation / Hibernate Validator |
-| Utilities | Lombok |
-| Containerisation | Docker (multi-stage build) |
+| Layer            | Technology                               |
+| ---------------- | ---------------------------------------- |
+| Language         | Java 21                                  |
+| Framework        | Spring Boot 3.5                          |
+| Security         | Spring Security + JJWT 0.12              |
+| Persistence      | Spring Data JPA / Hibernate              |
+| Database         | PostgreSQL                               |
+| File Storage     | Cloudflare R2 (AWS SDK v2)               |
+| Validation       | Jakarta Validation / Hibernate Validator |
+| Utilities        | Lombok                                   |
+| Containerisation | Docker (multi-stage build)               |
 
 ---
 
