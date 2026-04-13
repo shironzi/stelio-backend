@@ -19,7 +19,7 @@ A real-estate rental platform backend where users can list and rent properties. 
 
 ## 🏗️ System Architecture & Design
 
-![Alt text](images/High_Level_Diagram.png.png)
+![Alt text](./images/High_Level_Diagram.png.png)
 
 ---
 
