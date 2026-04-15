@@ -20,7 +20,6 @@ import com.aaronjosh.real_estate_app.dto.message.MessageDto;
 import com.aaronjosh.real_estate_app.dto.message.MessageResDto;
 import com.aaronjosh.real_estate_app.dto.message.SendMessageDto;
 import com.aaronjosh.real_estate_app.models.ConversationEntity;
-import com.aaronjosh.real_estate_app.models.FileEntity;
 import com.aaronjosh.real_estate_app.models.MessageEntity;
 import com.aaronjosh.real_estate_app.models.ParticipantEntity;
 import com.aaronjosh.real_estate_app.models.PropertyEntity;

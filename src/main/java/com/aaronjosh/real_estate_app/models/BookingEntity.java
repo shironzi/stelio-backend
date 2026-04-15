@@ -59,6 +59,8 @@ public class BookingEntity {
     private String contactPhone;
     private LocalDateTime expiresAt;
 
+    private String stripePaymentIntentId;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

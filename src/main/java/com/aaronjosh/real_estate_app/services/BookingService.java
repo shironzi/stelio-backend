@@ -1,7 +1,6 @@
 package com.aaronjosh.real_estate_app.services;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -72,12 +71,7 @@ public class BookingService {
                             dto.setGuestNames(booking.getGuestNames());
                             dto.setTotalGuests(booking.getTotalGuests());
                             dto.setContactPhone(booking.getContactPhone());
-
-                            if (now.isAfter(booking.getExpiresAt())) {
-                                dto.setStatus(BookingStatus.EXPIRED.toString());
-                            } else {
-                                dto.setStatus(booking.getStatus().toString());
-                            }
+                            dto.setStatus(booking.getStatus().toString());
 
                             // Property fields
                             dto.setPropertyId(booking.getProperty().getId());

@@ -9,11 +9,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import com.aaronjosh.real_estate_app.dto.payment.PaymentReqDto;
 import com.aaronjosh.real_estate_app.services.PaymentService;
+import com.stripe.exception.StripeException;
 
 import jakarta.validation.Valid;
 
@@ -25,11 +24,13 @@ public class PaymentsController {
     private PaymentService paymentService;
 
     @PostMapping("/{bookingId}")
-    public ResponseEntity<?> processPayment(@Valid @PathVariable UUID bookingId,
-            @RequestBody PaymentReqDto paymentInfo) {
-        paymentService.processPayment(bookingId, paymentInfo);
+    public ResponseEntity<?> generateStripePaymentIntent(@Valid @PathVariable UUID bookingId) throws StripeException {
+        String StripePaymentIntentId = paymentService.generateStripePaymentIntent(bookingId);
 
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(Map.of("success", true, "message", "Payment Successfully received."));
+                .body(Map.of(
+                        "success", true,
+                        "message", "Payment Successfully received.",
+                        "paymentId", StripePaymentIntentId));
     }
 }
