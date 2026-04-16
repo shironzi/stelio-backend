@@ -5,21 +5,29 @@ import java.math.RoundingMode;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.aaronjosh.real_estate_app.models.BookingEntity;
+import com.aaronjosh.real_estate_app.models.BookingEntity.BookingStatus;
 import com.aaronjosh.real_estate_app.models.BookingEntity.PaymentStatus;
 import com.aaronjosh.real_estate_app.repositories.BookingRepo;
+import com.stripe.model.Event;
 import com.stripe.model.PaymentIntent;
+import com.stripe.net.Webhook;
 import com.stripe.param.PaymentIntentCreateParams;
+import com.stripe.exception.SignatureVerificationException;
 import com.stripe.exception.StripeException;
 
 import jakarta.transaction.Transactional;
 
 @Service
 public class PaymentService {
+
+    @Value("${STRIPE_WEBHOOK_KEY}")
+    private String stripeWebhookSecret;
 
     @Autowired
     private BookingRepo bookingRepo;
@@ -47,5 +55,49 @@ public class PaymentService {
         bookingRepo.save(booking);
 
         return paymentIntent.getClientSecret();
+    }
+
+    @Transactional
+    public void updateBookingStatus(String payload, String sigHeader) {
+        try {
+            Event event = Webhook.constructEvent(payload, sigHeader, stripeWebhookSecret);
+
+            if (!"payment_intent.succeeded".equals(event.getType())) {
+                return;
+            }
+
+            PaymentIntent paymentIntent = event.getDataObjectDeserializer().getObject()
+                    .map(obj -> (PaymentIntent) obj)
+                    .orElseThrow(() -> new IllegalStateException("Failed to deserialize event"));
+            String paymentIntentId = paymentIntent.getId();
+
+            BookingEntity booking = bookingRepo
+                    .findByStripePaymentIntentId(paymentIntentId)
+                    .orElseThrow(() -> new IllegalStateException(
+                            "Booking not found for paymentIntentId: " + paymentIntentId));
+
+            if (!"succeeded".equals(paymentIntent.getStatus())) {
+                return;
+            }
+
+            long amountReceived = paymentIntent.getAmountReceived();
+            long expectedAmount = booking.getBalance()
+                    .multiply(new BigDecimal("100"))
+                    .longValue();
+
+            if (amountReceived != expectedAmount) {
+                throw new IllegalStateException("Amount mismatch for booking " + booking.getId());
+            }
+
+            booking.setBalance(BigDecimal.ZERO);
+            booking.setStatus(BookingStatus.CONFIRMED);
+
+            bookingRepo.save(booking);
+
+        } catch (SignatureVerificationException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid signature");
+        } catch (Exception e) {
+            throw e;
+        }
     }
 }

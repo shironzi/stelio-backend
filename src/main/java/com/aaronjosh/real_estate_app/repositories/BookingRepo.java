@@ -2,6 +2,7 @@ package com.aaronjosh.real_estate_app.repositories;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.domain.Sort;
@@ -41,4 +42,6 @@ public interface BookingRepo extends JpaRepository<BookingEntity, UUID> {
       @Param("propertyId") UUID propertyId,
       @Param("requestStart") LocalDateTime requestStart,
       @Param("requestEnd") LocalDateTime requestEnd);
+
+  Optional<BookingEntity> findByStripePaymentIntentId(String id);
 }
