@@ -1,7 +1,5 @@
 package com.aaronjosh.real_estate_app.services;
 
-import java.util.UUID;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -35,9 +33,15 @@ public class UserService {
     }
 
     // Updating role into owner
-    public LoginResDto becomeHost(UUID userId) {
-        UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Booking not found"));
+    public LoginResDto becomeHost() {
+        UserDetails userDetails = getUserDetails();
+
+        if (userDetails == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User is not authenticated");
+        }
+
+        UserEntity user = userRepository.findById(userDetails.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
         user.setRole(Role.OWNER);
         userRepository.save(user);
@@ -46,7 +50,7 @@ public class UserService {
 
         loginData.setName(user.getFullName());
         loginData.setEmail(user.getEmail());
-        loginData.setRole(user.getRole());
+        loginData.setRole(user.getRole().toString());
         loginData.setId(user.getId());
 
         return loginData;
