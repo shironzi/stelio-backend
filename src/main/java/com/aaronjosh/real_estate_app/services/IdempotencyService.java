@@ -19,41 +19,34 @@ public class IdempotencyService {
     @Autowired
     private IdempotencyRepo repo;
 
-    public ResponseEntity<?> handle(String key, Supplier<String> operation) {
+    public ResponseEntity<?> handle(String key, Supplier<Map<String, Object>> operationResponse) {
         try {
             // Creates a idempotent entity
             IdempotencyEntity idemp = new IdempotencyEntity();
             idemp.setIdempotencyKey(key);
             idemp.setStatus(IdempotencyStatus.PENDING);
+            idemp.setResponseMap(Map.of("success", true, "message", "Request is already in progress"));
             repo.saveAndFlush(idemp);
 
             // Execute the operation
-            String response = operation.get();
+            Map<String, Object> response = operationResponse.get();
 
             // Update idempotency status to COMPLETED and store response
             idemp.setStatus(IdempotencyStatus.COMPLETED);
-            idemp.setResponse(response);
-            repo.save(idemp);
+            idemp.setResponseMap(response);
+            repo.saveAndFlush(idemp);
 
             // Return response
-            return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
-                    "success", true,
-                    "message", response));
+            return ResponseEntity.status(HttpStatus.CREATED).body(operationResponse);
 
         } catch (DataIntegrityViolationException e) {
             // Another request inserted it first → fetch existing
             IdempotencyEntity existing = repo.findByIdempotencyKey(key)
                     .orElseThrow(() -> new IllegalStateException("Missing idempotency record"));
 
-            if (existing.getStatus() == IdempotencyStatus.COMPLETED) {
-                return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
-                        "success", true,
-                        "message", existing.getResponse()));
-            } else {
-                return ResponseEntity.status(HttpStatus.OK).body(Map.of(
-                        "success", true,
-                        "message", "Request is already in progress"));
-            }
+            return ResponseEntity.status(HttpStatus.OK).body(existing.getResponseMap());
+        } catch (Exception e) {
+            throw new RuntimeException("An unexpected error occurred during idempotent operation", e);
         }
     }
 }

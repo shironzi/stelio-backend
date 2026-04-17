@@ -2,6 +2,7 @@ package com.aaronjosh.real_estate_app.services;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.Objects;
@@ -170,7 +171,7 @@ public class BookingService {
 
     // Requesting for booking a property with a Pending for approval
     @Transactional
-    public String book(UUID propertyId, BookingReqDto bookingInfo) {
+    public Map<String, Object> book(UUID propertyId, BookingReqDto bookingInfo) {
         UserDetails user = userService.getUserDetails();
 
         // Find property and lock
@@ -210,11 +211,13 @@ public class BookingService {
         bookingRepo.save(booking);
         eventPublisher.handleBookingRequested(new BookingRequestedEvent(bookingInfo, userEntity, property));
 
-        return "Successfully requested to book a property.";
+        return Map.of(
+                "success", true,
+                "message", "Successfully requested to book a property.");
     }
 
     @Transactional
-    public String reserve(UUID propertyId, BookingReqDto bookingInfo) {
+    public Map<String, Object> reserve(UUID propertyId, BookingReqDto bookingInfo) {
         UserDetails user = userService.getUserDetails();
 
         UserEntity userEntity = userRepo.findById(user.getId())
@@ -239,7 +242,9 @@ public class BookingService {
 
         bookingRepo.save(booking);
 
-        return "Successfully request property reservation";
+        return Map.of(
+                "success", true,
+                "message", "Successfully request property reservation.");
     }
 
     // cancel booking from renters

@@ -1,6 +1,7 @@
 package com.aaronjosh.real_estate_app.models;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.UUID;
 
 import jakarta.persistence.Column;
@@ -30,7 +31,7 @@ public class IdempotencyEntity {
     private String idempotencyKey;
 
     @Column(columnDefinition = "TEXT")
-    private String response;
+    private transient Map<String, Object> responseMap;
 
     @Column(nullable = false)
     private IdempotencyStatus status = IdempotencyStatus.PENDING;

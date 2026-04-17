@@ -20,6 +20,15 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+        private Map<String, Object> createErrorResponse(HttpStatus status, String message) {
+                Map<String, Object> response = new LinkedHashMap<>();
+                response.put("timestamp", LocalDateTime.now());
+                response.put("status", status.value());
+                response.put("error", status.getReasonPhrase());
+                response.put("message", message);
+                return response;
+        }
+
         @ExceptionHandler(EmailAlreadyExistsException.class)
         public ResponseEntity<?> handleEmailConflict(EmailAlreadyExistsException ex) {
                 return ResponseEntity.status(HttpStatus.CONFLICT)
@@ -48,8 +57,10 @@ public class GlobalExceptionHandler {
 
         @ExceptionHandler(Exception.class)
         public ResponseEntity<?> handleOtherExceptions(Exception ex) {
+
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                                .body(Map.of("error", "Internal Server Error", "message", ex.getMessage()));
+                                .body(createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR,
+                                                "An unexpected error occurred"));
         }
 
         @ExceptionHandler(ResponseStatusException.class)
