@@ -101,6 +101,7 @@ public class PaymentService {
 
             booking.setBalance(BigDecimal.ZERO);
             booking.setStatus(BookingStatus.CONFIRMED);
+            booking.setPaymentStatus(PaymentStatus.PAID);
 
             bookingRepo.save(booking);
 

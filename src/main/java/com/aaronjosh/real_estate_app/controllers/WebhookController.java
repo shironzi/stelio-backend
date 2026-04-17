@@ -22,14 +22,6 @@ public class WebhookController {
             @RequestBody String payload,
             @RequestHeader("Stripe-Signature") String sigHeader) {
 
-        System.out.println("TESTING");
-        System.out.println("TESTING");
-        System.out.println("TESTING");
-        System.out.println("TESTING");
-        System.out.println("TESTING");
-        System.out.println("TESTING");
-        System.out.println("TESTING");
-
         paymentService.updateBookingStatus(payload, sigHeader);
         return ResponseEntity.ok().build();
 
