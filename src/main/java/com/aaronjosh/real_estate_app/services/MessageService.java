@@ -46,9 +46,6 @@ public class MessageService {
     private UserService userService;
 
     @Autowired
-    private FileService fileService;
-
-    @Autowired
     private ParticipantRepo participantRepo;
 
     @Autowired
