@@ -4,6 +4,9 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -30,8 +33,9 @@ public class IdempotencyEntity {
     @Column(nullable = false, unique = true)
     private String idempotencyKey;
 
-    @Column(columnDefinition = "TEXT")
-    private transient Map<String, Object> responseMap;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "response_map", columnDefinition = "jsonb")
+    private Map<String, Object> responseMap;
 
     @Column(nullable = false)
     private IdempotencyStatus status = IdempotencyStatus.PENDING;

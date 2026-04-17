@@ -37,7 +37,7 @@ public class IdempotencyService {
             repo.saveAndFlush(idemp);
 
             // Return response
-            return ResponseEntity.status(HttpStatus.CREATED).body(operationResponse);
+            return ResponseEntity.status(HttpStatus.CREATED).body(idemp.getResponseMap());
 
         } catch (DataIntegrityViolationException e) {
             // Another request inserted it first → fetch existing

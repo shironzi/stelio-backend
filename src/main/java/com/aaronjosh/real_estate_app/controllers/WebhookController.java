@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.aaronjosh.real_estate_app.services.PaymentService;
 
 @RestController
-@RequestMapping("/api/webhook")
+@RequestMapping("/api/webhooks")
 public class WebhookController {
 
     @Autowired
@@ -21,6 +21,14 @@ public class WebhookController {
     public ResponseEntity<?> handleStripeEvent(
             @RequestBody String payload,
             @RequestHeader("Stripe-Signature") String sigHeader) {
+
+        System.out.println("TESTING");
+        System.out.println("TESTING");
+        System.out.println("TESTING");
+        System.out.println("TESTING");
+        System.out.println("TESTING");
+        System.out.println("TESTING");
+        System.out.println("TESTING");
 
         paymentService.updateBookingStatus(payload, sigHeader);
         return ResponseEntity.ok().build();
