@@ -19,6 +19,7 @@ import com.aaronjosh.real_estate_app.services.IdempotencyService;
 import com.aaronjosh.real_estate_app.services.UserService;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -61,7 +62,7 @@ public class BookingController {
 
     @PreAuthorize("hasRole('RENTER')")
     @PostMapping("/{propertyId}/book")
-    public ResponseEntity<?> book(@RequestHeader("Idempotency-Key") String idempotencyKey,
+    public ResponseEntity<?> book(@RequestHeader("Idempotency-Key") @NotNull String idempotencyKey,
             @Valid @PathVariable UUID propertyId, @RequestBody BookingReqDto booking) {
 
         return idempService.handle(idempotencyKey,
