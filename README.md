@@ -14,6 +14,7 @@ A real-estate rental platform backend where users can list and rent properties. 
 - **File storage** via Cloudflare R2 (S3-compatible) for property images
 - **JWT-based authentication** with token revocation
 - **Messaging** between renters and property owners
+- **Real-time updates** via WebSocket (STOMP) for live booking status notifications
 
 ---
 
@@ -42,20 +43,84 @@ A real-estate rental platform backend where users can list and rent properties. 
 
 ### 3. Transactional Booking Workflow
 
-Booking is handled atomically:
+Booking is handled atomically with full ACID guarantees across all stages:
 
-1. Availability check (overlapping confirmed bookings are blocked with a pessimistic lock)
-2. Reservation created with status `PENDING_PAYMENT` and a **10-minute TTL**
-3. Payment Intent created via `POST /api/payments/{bookingId}` (requires `Idempotency-Key` header); Stripe processes the payment client-side
-4. Stripe sends a `payment_intent.succeeded` webhook to `POST /api/webhooks/stripe`; status advances to `CONFIRMED` when the full balance is received
+1. **Availability check** — overlapping confirmed bookings are blocked with a **pessimistic lock** (`SELECT FOR UPDATE`) on the property row, preventing double-bookings under concurrent load
+2. **Reservation created** — status set to `PENDING_PAYMENT` with a **10-minute TTL**; expired reservations are automatically excluded from conflict checks
+3. **Payment Intent created** — via `POST /api/payments/{bookingId}` (requires `Idempotency-Key` header); a Stripe `PaymentIntent` is generated and the `client_secret` is returned to the frontend for client-side payment processing
+4. **Stripe webhook confirms payment** — Stripe sends a `payment_intent.succeeded` event to `POST /api/webhooks/stripe`; the backend verifies the webhook signature, validates the exact amount received, and atomically transitions the booking to `CONFIRMED`
+5. **Real-time notification** — once confirmed, the updated booking is pushed to the renter instantly via WebSocket (see [Real-Time Booking Updates](#6-real-time-booking-updates))
 
-### 4. Idempotency
+#### Stripe Integration Details
 
-- Booking requests require an **Idempotency-Key** header
-- Prevents duplicate bookings and double charges on retried requests
+- **PaymentIntent creation** is wrapped in idempotency — retrying with the same `Idempotency-Key` header returns the cached response without creating a duplicate intent
+- **Webhook signature verification** uses `Stripe.Webhook.constructEvent()` with the `Stripe-Signature` header and the webhook signing secret, rejecting any tampered or replayed events
+- **Amount validation** — the amount received from Stripe is compared against the stored booking balance (converted to the smallest currency unit); a mismatch throws an `IllegalStateException` and halts the confirmation
+- **Idempotent webhook handling** — the `payment_intent.succeeded` event is only processed once; duplicate webhook deliveries are safely ignored because the booking's payment status is checked before any mutation
+
+```
+POST /api/bookings/{propertyId}/book
+  └─ Pessimistic lock on property
+  └─ Overlap check (confirmed + pending with valid TTL)
+  └─ BookingEntity saved (PENDING_PAYMENT)
+  └─ BookingRequestedEvent published (after commit)
+       └─ Conversation + initial message created
+
+POST /api/payments/{bookingId}            [Idempotency-Key required]
+  └─ Stripe PaymentIntent created
+  └─ client_secret returned to frontend
+
+POST /api/webhooks/stripe                 [Stripe-Signature verified]
+  └─ payment_intent.succeeded received
+  └─ Amount validated
+  └─ Booking → CONFIRMED, PaymentStatus → PAID
+  └─ WebSocket push to renter
+```
+
+### 4. Real-Time Booking Updates
+
+Booking status changes triggered by Stripe are pushed to the client immediately using **STOMP over WebSocket** (via SockJS fallback), eliminating the need for polling.
+
+#### How It Works
+
+1. The frontend connects to the `/ws` endpoint using SockJS + STOMP, authenticating via the `Authorization: Bearer <token>` STOMP header
+2. Upon connection, `AuthChannelInterceptor` validates the JWT and attaches the user's identity to the STOMP session
+3. The client subscribes to `/user/my-bookings` to receive personal booking updates
+4. When Stripe confirms a payment via webhook, `PaymentService` calls `SimpMessagingTemplate.convertAndSendToUser(userId, "/my-bookings", bookingDto)` to deliver the updated `BookingResDto` directly to the authenticated user's session
+
+```
+Client                          Server
+  │                               │
+  ├── CONNECT (Bearer token) ───► AuthChannelInterceptor validates JWT
+  │                               │
+  ├── SUBSCRIBE /user/my-bookings │
+  │                               │
+  │   [Stripe webhook fires]      │
+  │                               ├── PaymentService confirms booking
+  │                               ├── SimpMessagingTemplate.convertAndSendToUser(...)
+  │                               │
+  ◄── BookingResDto (JSON) ───────┤
+```
+
+#### WebSocket Configuration
+
+| Property | Value |
+| --- | --- |
+| Endpoint | `/ws` (SockJS enabled) |
+| App destination prefix | `/app` |
+| User destination | `/user/my-bookings` |
+| Broker | In-memory simple broker |
+| Auth | JWT via STOMP `Authorization` header |
+| Allowed origins | `localhost:5173`, production frontend URL |
+
+### 5. Idempotency
+
+- Booking requests and payment intent creation require an **Idempotency-Key** header
+- On first receipt, a record is inserted with `PENDING` status; the operation executes and the record is updated to `COMPLETED` with the serialised response
+- On retry, `DataIntegrityViolationException` is caught (unique constraint on the key), the existing record is fetched, and the stored response is returned — identical to the original, with no side effects
 - Keys expire after 24 hours; stale keys are cleaned up nightly
 
-### 5. Booking Lifecycle (State Machine)
+### 6. Booking Lifecycle (State Machine)
 
 ```
 PENDING_PAYMENT → PENDING_APPROVAL → CONFIRMED → COMPLETED
@@ -68,25 +133,26 @@ PENDING_PAYMENT → PENDING_APPROVAL → CONFIRMED → COMPLETED
 - **Owner** can approve, reject, or mark bookings as no-show
 - **Renter** can cancel their own bookings
 - Expired reservations are released automatically, returning the property to available
+- `CONFIRMED` transitions triggered by Stripe are followed immediately by a WebSocket push to the renter
 
-### 6. Messaging
+### 7. Messaging
 
 - Renters and owners can exchange messages via conversations
-- A conversation is automatically created when a booking request is submitted
+- A conversation is automatically created when a booking request is submitted (published as a `BookingRequestedEvent` after transaction commit, handled by `BookingMessageListener`)
 - Conversations track unread counts and mute status per participant
 - Conversations may optionally be linked to a review
 
-### 7. Reviews
+### 8. Reviews
 
 - Owners can view reviews and star ratings for their properties
 - Review statistics (average stars, individual messages) are exposed via the API
 
-### 8. Property Dashboard & Statistics
+### 9. Property Dashboard & Statistics
 
 - Owners get a per-property dashboard: today's earnings, monthly earnings, occupancy rate, upcoming check-ins, pending reviews, booking counts by status
 - A booking calendar endpoint returns confirmed/pending bookings as date ranges
 
-### 9. Automated Cleanup
+### 10. Automated Cleanup
 
 A scheduled task runs daily at **02:30 AM** to:
 
@@ -109,8 +175,8 @@ com/aaronjosh/real_estate_app/
 │   ├── message/
 │   ├── property/
 │   └── payment/
-├── security/        # JWT filter & Spring Security config
-├── config/          # Application configuration beans
+├── security/        # JWT filter, STOMP auth interceptor & Spring Security config
+├── config/          # Application configuration beans (incl. WebSocket, Stripe)
 ├── scheduler/       # Nightly cleanup jobs
 ├── util/            # Helpers (e.g. CloudflareR2Service)
 └── exceptions/      # Custom exception types
@@ -122,7 +188,7 @@ com/aaronjosh/real_estate_app/
 | ------------------- | ------------------------------------------------------------------------------------------------------ |
 | `users`             | owns many `property`, has many `bookings`, `favorites`, `reviews`, `messages`                          |
 | `property`          | belongs to a `users` (host), has many `bookings`, `files`, `favorites`, `reviews`, one `propertyStats` |
-| `bookings`          | belongs to `property` and `users` (renter); indexed on `(property_id, startDateTime, endDateTime)`     |
+| `bookings`          | belongs to `property` and `users` (renter); indexed on `(property_id, startDateTime, endDateTime)`; holds `stripePaymentIntentId` for webhook reconciliation |
 | `conversations`     | has many `participants` and `messages`; optionally linked to one `review`                              |
 | `messages`          | sent by a `users`, belongs to a `conversation`, may have `files`                                       |
 | `files`             | stored on Cloudflare R2; associated with either a `property` or a `message`                            |
@@ -142,6 +208,8 @@ com/aaronjosh/real_estate_app/
 | Session management | Stateless (no server-side sessions)                                |
 | Concurrency safety | Pessimistic lock on overlapping booking query                      |
 | Idempotency        | Per-user idempotency key with 24-hour TTL                          |
+| WebSocket auth     | JWT validated in `AuthChannelInterceptor` on STOMP CONNECT         |
+| Stripe webhooks    | Signature verified via `Webhook.constructEvent()` before processing|
 
 **Public endpoints** (no authentication required):
 
@@ -150,6 +218,7 @@ com/aaronjosh/real_estate_app/
 - `GET /api/properties/`
 - `GET /api/image/**`
 - `POST /api/webhooks/stripe`
+- `GET /ws/**` (WebSocket handshake; per-connection auth handled by STOMP interceptor)
 
 ---
 
@@ -203,7 +272,14 @@ com/aaronjosh/real_estate_app/
 
 | Method | Path      | Description                                              |
 | ------ | --------- | -------------------------------------------------------- |
-| `POST` | `/stripe` | Stripe webhook — confirms booking on `payment_intent.succeeded` |
+| `POST` | `/stripe` | Stripe webhook — confirms booking on `payment_intent.succeeded` and triggers WebSocket push |
+
+### WebSocket — `/ws`
+
+| Channel | Direction | Description |
+| ------- | --------- | ----------- |
+| `CONNECT` with `Authorization` header | Client → Server | Authenticates the STOMP session via JWT |
+| `/user/my-bookings` | Server → Client | Receives `BookingResDto` when a booking transitions to `CONFIRMED` after payment |
 
 ### Messages — `/api/messages`
 
@@ -248,6 +324,7 @@ com/aaronjosh/real_estate_app/
 | Database         | PostgreSQL                               |
 | File Storage     | Cloudflare R2 (AWS SDK v2)               |
 | Payments         | Stripe (stripe-java 32)                  |
+| Real-time        | Spring WebSocket + STOMP (SockJS)        |
 | Validation       | Jakarta Validation / Hibernate Validator |
 | Utilities        | Lombok                                   |
 | Containerisation | Docker (multi-stage build)               |
@@ -262,6 +339,7 @@ com/aaronjosh/real_estate_app/
 - Maven 3.9+
 - PostgreSQL database
 - Cloudflare R2 bucket (or any S3-compatible storage)
+- Stripe account with a webhook endpoint configured to forward `payment_intent.succeeded` events to `POST /api/webhooks/stripe`
 
 ### Environment Variables
 
@@ -292,6 +370,8 @@ STRIPE_WEBHOOK_KEY=<stripe-webhook-signing-secret>
 PORT=8080
 ```
 
+> **Stripe webhook setup:** In your Stripe dashboard, add a webhook endpoint pointing to `https://<your-domain>/api/webhooks/stripe` and subscribe to the `payment_intent.succeeded` event. Copy the signing secret into `STRIPE_WEBHOOK_KEY`. For local development, use the [Stripe CLI](https://stripe.com/docs/stripe-cli): `stripe listen --forward-to localhost:8080/api/webhooks/stripe`.
+
 ### Run Locally
 
 ```bash
@@ -304,16 +384,7 @@ cd stelio-backend
 ```
 
 The API will be available at `http://localhost:8080`.
-
-### Run with Docker
-
-```bash
-# Build the image
-docker build -t stelio-backend .
-
-# Run the container (pass env vars via --env-file)
-docker run -p 8080:8080 --env-file .env stelio-backend
-```
+The WebSocket endpoint will be available at `ws://localhost:8080/ws`.
 
 ### Run Tests
 
