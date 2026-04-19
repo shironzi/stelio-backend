@@ -53,6 +53,7 @@ public class SecurityConfig {
                                                 .permitAll()
                                                 .requestMatchers(HttpMethod.POST, "/api/webhooks/**")
                                                 .permitAll()
+                                                .requestMatchers("/ws/**", "/app/**").permitAll()
                                                 .anyRequest().authenticated())
 
                                 // disable basic auth and default form login
@@ -73,7 +74,6 @@ public class SecurityConfig {
                                                 res.getWriter().write("""
                                                                 {"error":"Unauthorized","message":"%s"}
                                                                 """.formatted(authException.getMessage()));
-                                                System.out.println(authException.getMessage());
                                         } else {
                                                 res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                                                 res.getWriter().write("""

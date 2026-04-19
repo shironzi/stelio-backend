@@ -27,13 +27,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected boolean shouldNotFilter(@NonNull HttpServletRequest req) {
         String path = req.getServletPath();
         String method = req.getMethod();
+        String authHeader = req.getHeader("Authorization");
 
-        final String authHeader = req.getHeader("Authorization");
+        // Public endpoints
+        boolean isPublicPropertiesGet = path.equals("/api/properties/") && method.equalsIgnoreCase("GET");
+        boolean isPublicImageGet = path.startsWith("/api/image/") && method.equalsIgnoreCase("GET");
+        boolean isAuthEndpoint = path.equals("/api/auth/register") || path.equals("/api/auth/login");
+        boolean isWebhookEndpoint = path.startsWith("/api/webhooks/");
+        boolean isWebSocketEndpoint = path.startsWith("/ws");
 
-        return (authHeader == null && (path.equals("/api/properties/") && method.equalsIgnoreCase("GET"))
-                || (path.startsWith("/api/image/") && method.equalsIgnoreCase("GET"))
-                || path.equals("/api/auth/register") || path.equals("/api/auth/login")
-                || path.startsWith("/api/webhooks/"));
+        boolean isAuthenticatedAppPath = authHeader != null && path.startsWith("/app");
+
+        return isWebSocketEndpoint
+                || isAuthenticatedAppPath
+                || isPublicPropertiesGet
+                || isPublicImageGet
+                || isAuthEndpoint
+                || isWebhookEndpoint;
     }
 
     @Override
