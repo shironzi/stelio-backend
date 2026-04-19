@@ -7,7 +7,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.Objects;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,7 +56,6 @@ public class BookingService {
     // returns bookings from a user.
     public List<BookingResDto> getBookings() {
         UserDetails user = userService.getUserDetails();
-        LocalDateTime now = LocalDateTime.now();
 
         List<BookingResDto> bookings = bookingRepo.findByUser_id(user.getId(), Sort.by("createdAt").descending())
                 .stream().map(
