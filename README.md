@@ -46,8 +46,8 @@ Booking is handled atomically:
 
 1. Availability check (overlapping confirmed bookings are blocked with a pessimistic lock)
 2. Reservation created with status `PENDING_PAYMENT` and a **10-minute TTL**
-3. Payment processed via `POST /api/payments/{bookingId}` (minimum 30% on first payment)
-4. Status advances to `CONFIRMED` when fully paid; expires automatically if not paid in time
+3. Payment Intent created via `POST /api/payments/{bookingId}` (requires `Idempotency-Key` header); Stripe processes the payment client-side
+4. Stripe sends a `payment_intent.succeeded` webhook to `POST /api/webhooks/stripe`; status advances to `CONFIRMED` when the full balance is received
 
 ### 4. Idempotency
 
@@ -148,8 +148,8 @@ com/aaronjosh/real_estate_app/
 - `POST /api/auth/login`
 - `POST /api/auth/register`
 - `GET /api/properties/`
-- `GET /api/properties/{propertyId}`
 - `GET /api/image/**`
+- `POST /api/webhooks/stripe`
 
 ---
 
@@ -166,9 +166,9 @@ com/aaronjosh/real_estate_app/
 
 ### Users — `/api/users`
 
-| Method  | Path        | Description                      |
-| ------- | ----------- | -------------------------------- |
-| `PATCH` | `/{userId}` | Upgrade role from RENTER → OWNER |
+| Method  | Path | Description                      |
+| ------- | ---- | -------------------------------- |
+| `PATCH` | `/`  | Upgrade role from RENTER → OWNER |
 
 ### Properties — `/api/properties`
 
@@ -184,19 +184,26 @@ com/aaronjosh/real_estate_app/
 
 ### Bookings — `/api/bookings`
 
-| Method  | Path                  | Role   | Description                                           |
-| ------- | --------------------- | ------ | ----------------------------------------------------- |
-| `GET`   | `/`                   | Auth   | RENTER: own bookings; OWNER: all property bookings    |
-| `GET`   | `/{bookingId}`        | Auth   | Get booking details                                   |
-| `POST`  | `/{propertyId}`       | RENTER | Request a booking (requires `Idempotency-Key` header) |
-| `PATCH` | `/{bookingId}`        | OWNER  | Update booking status                                 |
-| `PATCH` | `/{bookingId}/cancel` | RENTER | Cancel booking                                        |
+| Method  | Path                    | Role   | Description                                             |
+| ------- | ----------------------- | ------ | ------------------------------------------------------- |
+| `GET`   | `/`                     | Auth   | RENTER: own bookings; OWNER: all property bookings      |
+| `GET`   | `/{bookingId}`          | Auth   | Get booking details                                     |
+| `POST`  | `/{propertyId}/book`    | RENTER | Request a booking (requires `Idempotency-Key` header)   |
+| `POST`  | `/{propertyId}/reserve` | RENTER | Reserve a property (requires `Idempotency-Key` header)  |
+| `PATCH` | `/{bookingId}`          | OWNER  | Update booking status                                   |
+| `PATCH` | `/{bookingId}/cancel`   | RENTER | Cancel booking                                          |
 
 ### Payments — `/api/payments`
 
-| Method | Path           | Role | Description                                |
-| ------ | -------------- | ---- | ------------------------------------------ |
-| `POST` | `/{bookingId}` | Auth | Process payment (min 30% on first payment) |
+| Method | Path           | Role | Description                                                |
+| ------ | -------------- | ---- | ---------------------------------------------------------- |
+| `POST` | `/{bookingId}` | Auth | Generate Stripe Payment Intent (requires `Idempotency-Key` header) |
+
+### Webhooks — `/api/webhooks`
+
+| Method | Path      | Description                                              |
+| ------ | --------- | -------------------------------------------------------- |
+| `POST` | `/stripe` | Stripe webhook — confirms booking on `payment_intent.succeeded` |
 
 ### Messages — `/api/messages`
 
@@ -240,6 +247,7 @@ com/aaronjosh/real_estate_app/
 | Persistence      | Spring Data JPA / Hibernate              |
 | Database         | PostgreSQL                               |
 | File Storage     | Cloudflare R2 (AWS SDK v2)               |
+| Payments         | Stripe (stripe-java 32)                  |
 | Validation       | Jakarta Validation / Hibernate Validator |
 | Utilities        | Lombok                                   |
 | Containerisation | Docker (multi-stage build)               |
@@ -275,6 +283,10 @@ CLOUD_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com
 CLOUD_PUBLIC_URL=https://pub-<id>.r2.dev
 CLOUD_ACCESS_KEY=<r2-access-key>
 CLOUD_SECRET_KEY=<r2-secret-key>
+
+# Stripe
+STRIPE_SECRET_KEY=<stripe-secret-key>
+STRIPE_WEBHOOK_KEY=<stripe-webhook-signing-secret>
 
 # Server (optional, defaults to 8080)
 PORT=8080
