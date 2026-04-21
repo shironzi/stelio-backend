@@ -23,11 +23,12 @@ public class AuthChannelInterceptor implements ChannelInterceptor {
 
         if (StompCommand.CONNECT.equals(accessor.getCommand())) {
             String token = accessor.getFirstNativeHeader("Authorization");
-            String userId = jwtService.extractUserId(token);
 
             if (token != null && token.startsWith("Bearer ")) {
                 token = token.substring(7);
             }
+
+            String userId = jwtService.extractUserId(token);
 
             if (token != null && jwtService.isAccessTokenValid(token)) {
                 UsernamePasswordAuthenticationToken user = new UsernamePasswordAuthenticationToken(
