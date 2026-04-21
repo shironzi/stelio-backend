@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.aaronjosh.real_estate_app.dto.auth.LoginReqDto;
 import com.aaronjosh.real_estate_app.dto.auth.LoginResDto;
 import com.aaronjosh.real_estate_app.dto.auth.RegisterReqDto;
-import com.aaronjosh.real_estate_app.dto.auth.UserDetails;
+import com.aaronjosh.real_estate_app.dto.user.UserDetails;
 import com.aaronjosh.real_estate_app.exceptions.EmailAlreadyExistsException;
 import com.aaronjosh.real_estate_app.exceptions.PasswordNotMatchException;
 import com.aaronjosh.real_estate_app.services.AuthService;

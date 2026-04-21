@@ -1,4 +1,4 @@
-package com.aaronjosh.real_estate_app.dto.auth;
+package com.aaronjosh.real_estate_app.dto.user;
 
 import java.util.UUID;
 
