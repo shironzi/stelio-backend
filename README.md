@@ -31,7 +31,7 @@ A real-estate rental platform backend where users can list and rent properties. 
 - Register and login with JWT tokens (24-hour expiry)
 - Logout invalidates the token via a server-side blacklist
 - Three roles: **ADMIN**, **OWNER** (host), **RENTER**
-- Renters can upgrade themselves to owners via `PATCH /api/users/{userId}`
+- Renters can upgrade themselves to owners via `PATCH /api/users/`
 
 ### 2. Property Listings
 
@@ -43,20 +43,28 @@ A real-estate rental platform backend where users can list and rent properties. 
 
 ### 3. Transactional Booking Workflow
 
-Booking is handled atomically with full ACID guarantees across all stages:
+The platform offers two booking modes with different flows:
 
-1. **Availability check** — overlapping confirmed bookings are blocked with a **pessimistic lock** (`SELECT FOR UPDATE`) on the property row, preventing double-bookings under concurrent load
-2. **Reservation created** — status set to `PENDING_PAYMENT` with a **10-minute TTL**; expired reservations are automatically excluded from conflict checks
-3. **Payment Intent created** — via `POST /api/payments/{bookingId}` (requires `Idempotency-Key` header); a Stripe `PaymentIntent` is generated and the `client_secret` is returned to the frontend for client-side payment processing
-4. **Stripe webhook confirms payment** — Stripe sends a `payment_intent.succeeded` event to `POST /api/webhooks/stripe`; the backend verifies the webhook signature, validates the exact amount received, and atomically transitions the booking to `CONFIRMED`
-5. **Real-time notification** — once confirmed, the updated booking is pushed to the renter instantly via WebSocket (see [Real-Time Booking Updates](#6-real-time-booking-updates))
+#### Mode A — Instant Pay (`POST /api/bookings/{propertyId}/book`)
+
+1. **Availability check** — overlapping bookings are blocked with a **pessimistic lock** (`SELECT FOR UPDATE`) on the property row, preventing double-bookings under concurrent load. Both `CONFIRMED` bookings and unexpired `PENDING_*` bookings are treated as conflicts.
+2. **Booking created** — status set to `PENDING_PAYMENT` with a **10-minute TTL**; expired bookings are automatically excluded from future conflict checks.
+3. **Payment Intent created** — via `POST /api/payments/{bookingId}` (requires `Idempotency-Key` header); a Stripe `PaymentIntent` is generated and the `client_secret` is returned to the frontend for client-side payment processing.
+4. **Stripe webhook confirms payment** — Stripe sends a `payment_intent.succeeded` event to `POST /api/webhooks/stripe`; the backend verifies the webhook signature, validates the exact amount received, and atomically transitions the booking to `CONFIRMED`.
+5. **Real-time notification** — the updated booking is pushed to the renter instantly via WebSocket (see [Real-Time Booking Updates](#4-real-time-booking-updates)).
+6. **Conversation created** — after the booking transaction commits, a `BookingRequestedEvent` triggers `BookingMessageListener`, which creates a conversation with an initial summary message between the renter and the property owner.
+
+#### Mode B — Request to Book (`POST /api/bookings/{propertyId}/reserve`)
+
+1. **Booking created** — status set to `PENDING_APPROVAL` directly, **without** an availability conflict check or pessimistic lock.
+2. **Owner reviews** — owner approves or rejects via `PATCH /api/bookings/{bookingId}`. Approval runs a conflict check before confirming.
 
 #### Stripe Integration Details
 
-- **PaymentIntent creation** is wrapped in idempotency — retrying with the same `Idempotency-Key` header returns the cached response without creating a duplicate intent
-- **Webhook signature verification** uses `Stripe.Webhook.constructEvent()` with the `Stripe-Signature` header and the webhook signing secret, rejecting any tampered or replayed events
-- **Amount validation** — the amount received from Stripe is compared against the stored booking balance (converted to the smallest currency unit); a mismatch throws an `IllegalStateException` and halts the confirmation
-- **Idempotent webhook handling** — the `payment_intent.succeeded` event is only processed once; duplicate webhook deliveries are safely ignored because the booking's payment status is checked before any mutation
+- **PaymentIntent creation** is wrapped in idempotency — retrying with the same `Idempotency-Key` returns the cached response without creating a duplicate intent.
+- **Webhook signature verification** uses `Webhook.constructEvent()` with the `Stripe-Signature` header and webhook signing secret, rejecting tampered or replayed events.
+- **Amount validation** — the amount received from Stripe is compared against the stored booking balance (converted to the smallest currency unit, PHP); a mismatch throws an `IllegalStateException` and halts confirmation.
+- **Idempotent webhook handling** — `payment_intent.succeeded` is only processed once; duplicate Stripe deliveries are safe because the booking's `paymentStatus` is checked before any mutation.
 
 ```
 POST /api/bookings/{propertyId}/book
@@ -83,10 +91,10 @@ Booking status changes triggered by Stripe are pushed to the client immediately 
 
 #### How It Works
 
-1. The frontend connects to the `/ws` endpoint using SockJS + STOMP, authenticating via the `Authorization: Bearer <token>` STOMP header
-2. Upon connection, `AuthChannelInterceptor` validates the JWT and attaches the user's identity to the STOMP session
-3. The client subscribes to `/user/my-bookings` to receive personal booking updates
-4. When Stripe confirms a payment via webhook, `PaymentService` calls `SimpMessagingTemplate.convertAndSendToUser(userId, "/my-bookings", bookingDto)` to deliver the updated `BookingResDto` directly to the authenticated user's session
+1. The frontend connects to the `/ws` endpoint using SockJS + STOMP, authenticating via the `Authorization: Bearer <token>` STOMP header.
+2. Upon connection, `AuthChannelInterceptor` validates the JWT and attaches the user's identity to the STOMP session.
+3. The client subscribes to `/user/my-bookings` to receive personal booking updates.
+4. When Stripe confirms a payment via webhook, `PaymentService` calls `SimpMessagingTemplate.convertAndSendToUser(userId, "/my-bookings", bookingDto)` to deliver the updated `BookingResDto` directly to the authenticated user's session.
 
 ```
 Client                          Server
@@ -104,53 +112,57 @@ Client                          Server
 
 #### WebSocket Configuration
 
-| Property | Value |
-| --- | --- |
-| Endpoint | `/ws` (SockJS enabled) |
-| App destination prefix | `/app` |
-| User destination | `/user/my-bookings` |
-| Broker | In-memory simple broker |
-| Auth | JWT via STOMP `Authorization` header |
-| Allowed origins | `localhost:5173`, production frontend URL |
+| Property               | Value                                     |
+| ---------------------- | ----------------------------------------- |
+| Endpoint               | `/ws` (SockJS enabled)                    |
+| App destination prefix | `/app`                                    |
+| User destination       | `/user/my-bookings`                       |
+| Broker                 | In-memory simple broker                   |
+| Auth                   | JWT via STOMP `Authorization` header      |
+| Allowed origins        | `localhost:5173`, production frontend URL |
 
 ### 5. Idempotency
 
-- Booking requests and payment intent creation require an **Idempotency-Key** header
-- On first receipt, a record is inserted with `PENDING` status; the operation executes and the record is updated to `COMPLETED` with the serialised response
-- On retry, `DataIntegrityViolationException` is caught (unique constraint on the key), the existing record is fetched, and the stored response is returned — identical to the original, with no side effects
-- Keys expire after 24 hours; stale keys are cleaned up nightly
+- Booking requests and payment intent creation require an **Idempotency-Key** header.
+- On first receipt, a record is inserted with `PENDING` status; the operation executes and the record is updated to `COMPLETED` with the serialised response.
+- On retry, `DataIntegrityViolationException` is caught (unique constraint on the key), the existing record is fetched, and the stored response is returned — identical to the original, with no side effects.
+- Keys expire after 24 hours; stale keys are cleaned up nightly.
 
 ### 6. Booking Lifecycle (State Machine)
 
 ```
-PENDING_PAYMENT → PENDING_APPROVAL → CONFIRMED → COMPLETED
-                                   ↘ REJECTED
-              ↘ CANCELLED
-              ↘ EXPIRED
-              ↘ NOSHOW
+book()    → PENDING_PAYMENT ──► CONFIRMED (via Stripe) → COMPLETED
+                          └───► EXPIRED
+                          └───► CANCELLED (renter)
+
+reserve() → PENDING_APPROVAL ─► CONFIRMED (owner approves) → COMPLETED
+                          └───► REJECTED  (owner rejects)
+                          └───► CANCELLED (renter)
+                          └───► NOSHOW    (owner marks)
 ```
 
-- **Owner** can approve, reject, or mark bookings as no-show
-- **Renter** can cancel their own bookings
-- Expired reservations are released automatically, returning the property to available
+- **Owner** can approve (`CONFIRMED`), reject (`REJECTED`), or mark as `NOSHOW`
+- **Renter** can cancel their own bookings at any point
+- Expired `PENDING_PAYMENT` reservations are released automatically, returning the dates to available
 - `CONFIRMED` transitions triggered by Stripe are followed immediately by a WebSocket push to the renter
 
 ### 7. Messaging
 
-- Renters and owners can exchange messages via conversations
-- A conversation is automatically created when a booking request is submitted (published as a `BookingRequestedEvent` after transaction commit, handled by `BookingMessageListener`)
-- Conversations track unread counts and mute status per participant
-- Conversations may optionally be linked to a review
+- Renters and owners can exchange messages via conversations.
+- A conversation with an initial booking summary message is automatically created when a `book()` request is submitted. This is done via `BookingRequestedEvent`, published after the booking transaction commits and handled by `BookingMessageListener`.
+- Conversations track unread counts and mute status per participant.
+- Conversations may optionally be linked to a review.
 
 ### 8. Reviews
 
-- Owners can view reviews and star ratings for their properties
-- Review statistics (average stars, individual messages) are exposed via the API
+- Owners can view reviews and star ratings for their properties.
+- Review statistics (average stars, individual messages) are exposed via the API.
 
 ### 9. Property Dashboard & Statistics
 
-- Owners get a per-property dashboard: today's earnings, monthly earnings, occupancy rate, upcoming check-ins, pending reviews, booking counts by status
-- A booking calendar endpoint returns confirmed/pending bookings as date ranges
+- Owners get a per-property dashboard: today's earnings, monthly earnings, occupancy rate, upcoming check-ins, pending reviews, booking counts by status.
+- A booking calendar endpoint returns confirmed/pending bookings as date ranges.
+  > **⚠️ Current limitation:** All numeric fields in `PropertyStats` (`earningsToday`, `occupancyRate`, `monthlyEarnings`, etc.) are stored as static values defaulting to `0.0` and are never updated by any service. The `upcomingBookings` and `recentGuests` fields are marked `@Transient` and are always empty. The dashboard endpoint returns real data only for the booking calendar — all other stats currently return zeros.
 
 ### 10. Automated Cleanup
 
@@ -165,51 +177,54 @@ A scheduled task runs daily at **02:30 AM** to:
 
 ```
 com/aaronjosh/real_estate_app/
-├── controllers/     # REST API layer (11 controllers)
-├── services/        # Business logic
-├── repositories/    # Spring Data JPA repositories
-├── models/          # JPA entities
-├── dto/             # Request / response DTOs
+├── controllers/          # REST API layer (11 controllers)
+├── services/             # Business logic
+│   └── listeners/        # Transactional event listeners (e.g. BookingMessageListener)
+├── repositories/         # Spring Data JPA repositories
+├── models/               # JPA entities
+│   └── event/            # Application event POJOs (e.g. BookingRequestedEvent)
+├── dto/                  # Request / response DTOs
 │   ├── auth/
 │   ├── booking/
 │   ├── message/
-│   ├── property/
-│   └── payment/
-├── security/        # JWT filter, STOMP auth interceptor & Spring Security config
-├── config/          # Application configuration beans (incl. WebSocket, Stripe)
-├── scheduler/       # Nightly cleanup jobs
-├── util/            # Helpers (e.g. CloudflareR2Service)
-└── exceptions/      # Custom exception types
+│   └── property/
+├── security/             # JWT filter, STOMP auth interceptor & Spring Security config
+├── config/               # Application configuration beans (incl. WebSocket, Stripe)
+├── scheduler/            # Nightly cleanup jobs
+├── util/                 # Helpers (CloudflareR2Service, PropertyMapper, etc.)
+└── exceptions/           # Custom exception types & GlobalExceptionHandler
 ```
 
 ### Data Model
 
-| Entity              | Key Relationships                                                                                      |
-| ------------------- | ------------------------------------------------------------------------------------------------------ |
-| `users`             | owns many `property`, has many `bookings`, `favorites`, `reviews`, `messages`                          |
-| `property`          | belongs to a `users` (host), has many `bookings`, `files`, `favorites`, `reviews`, one `propertyStats` |
+| Entity              | Key Relationships                                                                                                                                            |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `users`             | owns many `property`, has many `bookings`, `favorites`, `reviews`, `messages`                                                                                |
+| `property`          | belongs to a `users` (host), has many `bookings`, `files`, `favorites`, `reviews`, one `propertyStats`                                                       |
 | `bookings`          | belongs to `property` and `users` (renter); indexed on `(property_id, startDateTime, endDateTime)`; holds `stripePaymentIntentId` for webhook reconciliation |
-| `conversations`     | has many `participants` and `messages`; optionally linked to one `review`                              |
-| `messages`          | sent by a `users`, belongs to a `conversation`, may have `files`                                       |
-| `files`             | stored on Cloudflare R2; associated with either a `property` or a `message`                            |
-| `propertyStats`     | one-to-one with `property`; aggregates booking and earnings data                                       |
-| `blacklistedTokens` | stores revoked JWTs until they expire                                                                  |
-| `idempotency`       | stores processed idempotency keys (24-hour TTL)                                                        |
+| `conversations`     | has many `participants` and `messages`; optionally linked to one `review`                                                                                    |
+| `messages`          | sent by a `users`, belongs to a `conversation`, may have `files`                                                                                             |
+| `files`             | stored on Cloudflare R2; associated with either a `property` or a `message`                                                                                  |
+| `propertyStats`     | one-to-one with `property`; aggregates booking and earnings data                                                                                             |
+| `blacklistedTokens` | stores revoked JWTs until they expire                                                                                                                        |
+| `idempotency`       | stores processed idempotency keys (24-hour TTL)                                                                                                              |
+
+--- |
 
 ---
 
 ## 🔒 Security
 
-| Concern            | Approach                                                           |
-| ------------------ | ------------------------------------------------------------------ |
-| Authentication     | JWT (HMAC-SHA256), 24-hour expiry, `Authorization: Bearer <token>` |
-| Token revocation   | Blacklist table checked on every request                           |
-| Password storage   | BCrypt hashing                                                     |
-| Session management | Stateless (no server-side sessions)                                |
-| Concurrency safety | Pessimistic lock on overlapping booking query                      |
-| Idempotency        | Per-user idempotency key with 24-hour TTL                          |
-| WebSocket auth     | JWT validated in `AuthChannelInterceptor` on STOMP CONNECT         |
-| Stripe webhooks    | Signature verified via `Webhook.constructEvent()` before processing|
+| Concern            | Approach                                                            |
+| ------------------ | ------------------------------------------------------------------- |
+| Authentication     | JWT (HMAC-SHA256), 24-hour expiry, `Authorization: Bearer <token>`  |
+| Token revocation   | Blacklist table checked on every request                            |
+| Password storage   | BCrypt hashing                                                      |
+| Session management | Stateless (no server-side sessions)                                 |
+| Concurrency safety | Pessimistic lock on overlapping booking query                       |
+| Idempotency        | Per-user idempotency key with 24-hour TTL                           |
+| WebSocket auth     | JWT validated in `AuthChannelInterceptor` on STOMP CONNECT          |
+| Stripe webhooks    | Signature verified via `Webhook.constructEvent()` before processing |
 
 **Public endpoints** (no authentication required):
 
@@ -253,33 +268,33 @@ com/aaronjosh/real_estate_app/
 
 ### Bookings — `/api/bookings`
 
-| Method  | Path                    | Role   | Description                                             |
-| ------- | ----------------------- | ------ | ------------------------------------------------------- |
-| `GET`   | `/`                     | Auth   | RENTER: own bookings; OWNER: all property bookings      |
-| `GET`   | `/{bookingId}`          | Auth   | Get booking details                                     |
-| `POST`  | `/{propertyId}/book`    | RENTER | Request a booking (requires `Idempotency-Key` header)   |
-| `POST`  | `/{propertyId}/reserve` | RENTER | Reserve a property (requires `Idempotency-Key` header)  |
-| `PATCH` | `/{bookingId}`          | OWNER  | Update booking status                                   |
-| `PATCH` | `/{bookingId}/cancel`   | RENTER | Cancel booking                                          |
+| Method  | Path                    | Role   | Description                                            |
+| ------- | ----------------------- | ------ | ------------------------------------------------------ |
+| `GET`   | `/`                     | Auth   | RENTER: own bookings; OWNER: all property bookings     |
+| `GET`   | `/{bookingId}`          | Auth   | Get booking details                                    |
+| `POST`  | `/{propertyId}/book`    | RENTER | Request a booking (requires `Idempotency-Key` header)  |
+| `POST`  | `/{propertyId}/reserve` | RENTER | Reserve a property (requires `Idempotency-Key` header) |
+| `PATCH` | `/{bookingId}`          | OWNER  | Update booking status                                  |
+| `PATCH` | `/{bookingId}/cancel`   | RENTER | Cancel booking                                         |
 
 ### Payments — `/api/payments`
 
-| Method | Path           | Role | Description                                                |
-| ------ | -------------- | ---- | ---------------------------------------------------------- |
+| Method | Path           | Role | Description                                                        |
+| ------ | -------------- | ---- | ------------------------------------------------------------------ |
 | `POST` | `/{bookingId}` | Auth | Generate Stripe Payment Intent (requires `Idempotency-Key` header) |
 
 ### Webhooks — `/api/webhooks`
 
-| Method | Path      | Description                                              |
-| ------ | --------- | -------------------------------------------------------- |
+| Method | Path      | Description                                                                                 |
+| ------ | --------- | ------------------------------------------------------------------------------------------- |
 | `POST` | `/stripe` | Stripe webhook — confirms booking on `payment_intent.succeeded` and triggers WebSocket push |
 
 ### WebSocket — `/ws`
 
-| Channel | Direction | Description |
-| ------- | --------- | ----------- |
-| `CONNECT` with `Authorization` header | Client → Server | Authenticates the STOMP session via JWT |
-| `/user/my-bookings` | Server → Client | Receives `BookingResDto` when a booking transitions to `CONFIRMED` after payment |
+| Channel                               | Direction       | Description                                                                      |
+| ------------------------------------- | --------------- | -------------------------------------------------------------------------------- |
+| `CONNECT` with `Authorization` header | Client → Server | Authenticates the STOMP session via JWT                                          |
+| `/user/my-bookings`                   | Server → Client | Receives `BookingResDto` when a booking transitions to `CONFIRMED` after payment |
 
 ### Messages — `/api/messages`
 
@@ -315,19 +330,18 @@ com/aaronjosh/real_estate_app/
 
 ## 💻 Tech Stack
 
-| Layer            | Technology                               |
-| ---------------- | ---------------------------------------- |
-| Language         | Java 21                                  |
-| Framework        | Spring Boot 3.5                          |
-| Security         | Spring Security + JJWT 0.12              |
-| Persistence      | Spring Data JPA / Hibernate              |
-| Database         | PostgreSQL                               |
-| File Storage     | Cloudflare R2 (AWS SDK v2)               |
-| Payments         | Stripe (stripe-java 32)                  |
-| Real-time        | Spring WebSocket + STOMP (SockJS)        |
-| Validation       | Jakarta Validation / Hibernate Validator |
-| Utilities        | Lombok                                   |
-| Containerisation | Docker (multi-stage build)               |
+| Layer        | Technology                               |
+| ------------ | ---------------------------------------- |
+| Language     | Java 21                                  |
+| Framework    | Spring Boot 3.5                          |
+| Security     | Spring Security + JJWT 0.12              |
+| Persistence  | Spring Data JPA / Hibernate              |
+| Database     | PostgreSQL                               |
+| File Storage | Cloudflare R2 (AWS SDK v2)               |
+| Payments     | Stripe (stripe-java 32)                  |
+| Real-time    | Spring WebSocket + STOMP (SockJS)        |
+| Validation   | Jakarta Validation / Hibernate Validator |
+| Utilities    | Lombok                                   |
 
 ---
 
