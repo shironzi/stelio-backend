@@ -17,7 +17,7 @@ import lombok.ToString;
 @Entity
 @Table(name = "files")
 @Data
-@ToString(exclude = { "propertyEntity" })
+@ToString(exclude = { "propertyEntity", "message" })
 public class FileEntity {
 
     @Id
@@ -26,10 +26,10 @@ public class FileEntity {
 
     private String filename;
     private Long size;
-    private String type;
     private String contentType;
     private String key;
     private LocalDateTime uploadedAt;
+    private Boolean isPublic;
 
     public FileEntity() {
     }
@@ -42,18 +42,12 @@ public class FileEntity {
     @JoinColumn(name = "message_id", nullable = true)
     private MessageEntity message;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "files")
+    private UserEntity uploadedBy;
+
     @PrePersist
     protected void onCreate() {
         uploadedAt = LocalDateTime.now();
-
-        if (propertyEntity == null && message == null) {
-            throw new IllegalArgumentException(
-                    "FileEntity must be associated with either a PropertyEntity or a MessageEntity.");
-        }
-
-        if (propertyEntity != null && message != null) {
-            throw new IllegalArgumentException(
-                    "FileEntity cannot be associated with both a PropertyEntity and a MessageEntity.");
-        }
     }
 }

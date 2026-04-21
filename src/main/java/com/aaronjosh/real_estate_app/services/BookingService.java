@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.aaronjosh.real_estate_app.dto.booking.PropertyBookingResDto;
-import com.aaronjosh.real_estate_app.dto.auth.UserDetails;
+import com.aaronjosh.real_estate_app.dto.user.UserDetails;
 import com.aaronjosh.real_estate_app.dto.booking.BookingReqDto;
 import com.aaronjosh.real_estate_app.dto.booking.BookingResDto;
 import com.aaronjosh.real_estate_app.models.BookingEntity;

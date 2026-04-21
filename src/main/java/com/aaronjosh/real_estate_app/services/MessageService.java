@@ -12,13 +12,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import com.aaronjosh.real_estate_app.dto.auth.UserDetails;
 import com.aaronjosh.real_estate_app.dto.booking.BookingReqDto;
 import com.aaronjosh.real_estate_app.dto.message.ChatHeadDto;
 import com.aaronjosh.real_estate_app.dto.message.ConversationReqDto;
 import com.aaronjosh.real_estate_app.dto.message.MessageDto;
 import com.aaronjosh.real_estate_app.dto.message.MessageResDto;
 import com.aaronjosh.real_estate_app.dto.message.SendMessageDto;
+import com.aaronjosh.real_estate_app.dto.user.UserDetails;
 import com.aaronjosh.real_estate_app.models.ConversationEntity;
 import com.aaronjosh.real_estate_app.models.MessageEntity;
 import com.aaronjosh.real_estate_app.models.ParticipantEntity;

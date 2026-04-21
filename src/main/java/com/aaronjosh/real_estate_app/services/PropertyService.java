@@ -11,10 +11,10 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
 
-import com.aaronjosh.real_estate_app.dto.auth.UserDetails;
 import com.aaronjosh.real_estate_app.dto.property.PropertyDto;
 import com.aaronjosh.real_estate_app.dto.property.PropertyResDto;
 import com.aaronjosh.real_estate_app.dto.property.UpdatePropertyDto;
+import com.aaronjosh.real_estate_app.dto.user.UserDetails;
 import com.aaronjosh.real_estate_app.models.FileEntity;
 import com.aaronjosh.real_estate_app.models.PropertyStats;
 import com.aaronjosh.real_estate_app.models.PropertyEntity;
@@ -22,7 +22,6 @@ import com.aaronjosh.real_estate_app.models.UserEntity;
 import com.aaronjosh.real_estate_app.models.PropertyEntity.PropertyStatus;
 import com.aaronjosh.real_estate_app.repositories.PropertyRepository;
 import com.aaronjosh.real_estate_app.repositories.UserRepository;
-import com.aaronjosh.real_estate_app.util.CloudflareR2Service;
 import com.aaronjosh.real_estate_app.util.PropertyMapper;
 import com.aaronjosh.real_estate_app.util.PropertyMapperWithSchedules;
 
@@ -98,10 +97,9 @@ public class PropertyService {
             try {
                 FileEntity file = new FileEntity();
 
-                String key = cloudflareR2Service.uploadFile(image, true);
+                String key = cloudflareR2Service.uploadFile(image, true, "properties/" + property.getId() + "/images/");
 
                 file.setFilename(image.getOriginalFilename());
-                file.setType(image.getContentType());
                 file.setSize(image.getSize());
                 file.setContentType(image.getContentType());
                 file.setKey(key);
@@ -163,10 +161,10 @@ public class PropertyService {
                 try {
                     FileEntity file = new FileEntity();
 
-                    String key = cloudflareR2Service.uploadFile(image, true);
+                    String key = cloudflareR2Service.uploadFile(image, true,
+                            "properties/" + property.getId() + "/images/");
 
                     file.setFilename(image.getOriginalFilename());
-                    file.setType(image.getContentType());
                     file.setSize(image.getSize());
                     file.setContentType(image.getContentType());
                     file.setKey(key);

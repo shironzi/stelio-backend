@@ -2,19 +2,17 @@ package com.aaronjosh.real_estate_app.util;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import com.aaronjosh.real_estate_app.dto.auth.UserDetails;
 import com.aaronjosh.real_estate_app.dto.property.ImageDto;
 import com.aaronjosh.real_estate_app.dto.property.PropertyResDto;
+import com.aaronjosh.real_estate_app.dto.user.UserDetails;
 import com.aaronjosh.real_estate_app.models.PropertyEntity;
 import com.aaronjosh.real_estate_app.repositories.FavoriteRepository;
+import com.aaronjosh.real_estate_app.services.CloudflareR2Service;
 import com.aaronjosh.real_estate_app.services.UserService;
 
 @Component
@@ -25,17 +23,15 @@ public class PropertyMapper {
     @Autowired
     private FavoriteRepository favoriteRepository;
 
-    @Value("${CLOUDFLARE_R2_PUBLIC_URL}")
-    private String publicUrl;
+    @Autowired
+    private CloudflareR2Service cloudflareR2Service;
 
     public PropertyResDto toDto(PropertyEntity property) {
         List<ImageDto> images = new ArrayList<>();
         property.getImages().forEach(image -> {
-            String imageUrl = publicUrl + "/" + image.getKey();
-
             ImageDto imageDto = new ImageDto();
             imageDto.setId(image.getId());
-            imageDto.setUrl(imageUrl);
+            imageDto.setUrl(cloudflareR2Service.generateLink(image));
             images.add(imageDto);
         });
 
