@@ -35,6 +35,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         boolean isAuthEndpoint = path.equals("/api/auth/register") || path.equals("/api/auth/login");
         boolean isWebhookEndpoint = path.startsWith("/api/webhooks/");
         boolean isWebSocketEndpoint = path.startsWith("/ws");
+        boolean isFileEndpoint = path.startsWith("/api/files") && method.equalsIgnoreCase("GET");
 
         boolean isAuthenticatedAppPath = authHeader != null && path.startsWith("/app");
 
@@ -43,7 +44,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 || isPublicPropertiesGet
                 || isPublicImageGet
                 || isAuthEndpoint
-                || isWebhookEndpoint;
+                || isWebhookEndpoint
+                || isFileEndpoint;
     }
 
     @Override

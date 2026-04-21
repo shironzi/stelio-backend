@@ -51,9 +51,9 @@ public class SecurityConfig {
                                                 .hasRole("OWNER")
                                                 .requestMatchers(HttpMethod.GET, "/api/properties/", "/api/image/**")
                                                 .permitAll()
-                                                .requestMatchers(HttpMethod.POST, "/api/webhooks/**")
-                                                .permitAll()
+                                                .requestMatchers("/api/webhooks/**").permitAll()
                                                 .requestMatchers("/ws/**", "/app/**").permitAll()
+                                                .requestMatchers("/api/files/**").permitAll()
                                                 .anyRequest().authenticated())
 
                                 // disable basic auth and default form login
