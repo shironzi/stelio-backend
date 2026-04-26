@@ -112,33 +112,33 @@ Client                          Server
 
 #### WebSocket Configuration
 
-| Property               | Value                                     |
-| ---------------------- | ----------------------------------------- |
-| Endpoint               | `/ws` (SockJS enabled)                    |
-| App destination prefix | `/app`                                    |
-| User destination       | `/user/my-bookings`                       |
-| Broker                 | In-memory simple broker                   |
-| Auth                   | JWT via STOMP `Authorization` header      |
-| Allowed origins        | `localhost:5173`, production frontend URL |
+| Property               | Value                                                                     |
+| ---------------------- | ------------------------------------------------------------------------- |
+| Endpoint               | `/ws` (SockJS enabled)                                                    |
+| App destination prefix | `/app`                                                                    |
+| User destination       | `/user/my-bookings`                                                       |
+| Broker destinations    | `/my-bookings`, `/user` (in-memory simple broker)                         |
+| Auth                   | JWT validated in `AuthChannelInterceptor` on STOMP `CONNECT`              |
+| Allowed origins        | `http://localhost:5173`, `https://stelio-frontend.aaronbaon1.workers.dev` |
 
 ### 5. Idempotency
 
-- Booking requests and payment intent creation require an **Idempotency-Key** header.
-- On first receipt, a record is inserted with `PENDING` status; the operation executes and the record is updated to `COMPLETED` with the serialised response.
-- On retry, `DataIntegrityViolationException` is caught (unique constraint on the key), the existing record is fetched, and the stored response is returned — identical to the original, with no side effects.
-- Keys expire after 24 hours; stale keys are cleaned up nightly.
+- Booking requests and payment intent creation require an **`Idempotency-Key`** header.
+- On first receipt, a record is inserted with `PENDING` status; the operation executes and the record is updated to `COMPLETED` with the serialised response stored as JSONB.
+- On retry, `DataIntegrityViolationException` is caught (unique constraint on the key), the existing record is fetched, and the stored response is returned — identical to the original.
+- Keys expire after **24 hours**; stale keys are cleaned up nightly by `CleanupScheduler`.
 
 ### 6. Booking Lifecycle (State Machine)
 
 ```
-book()    → PENDING_PAYMENT ──► CONFIRMED (via Stripe) → COMPLETED
-                          └───► EXPIRED
-                          └───► CANCELLED (renter)
+book()    → PENDING_PAYMENT ──► CONFIRMED (via Stripe webhook) → COMPLETED
+                          └───► EXPIRED   (TTL elapsed)
+                          └───► CANCELLED (renter cancels)
 
-reserve() → PENDING_APPROVAL ─► CONFIRMED (owner approves) → COMPLETED
+<!-- reserve() → PENDING_APPROVAL ─► CONFIRMED (owner approves)    → COMPLETED
                           └───► REJECTED  (owner rejects)
-                          └───► CANCELLED (renter)
-                          └───► NOSHOW    (owner marks)
+                          └───► CANCELLED (renter cancels)
+                          └───► NOSHOW    (owner marks) -->
 ```
 
 - **Owner** can approve (`CONFIRMED`), reject (`REJECTED`), or mark as `NOSHOW`
