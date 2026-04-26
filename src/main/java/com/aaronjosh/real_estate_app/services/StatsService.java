@@ -82,7 +82,11 @@ public class StatsService {
         long availableDays = ChronoUnit.DAYS.between(startOfMonth, now);
         double occupancyRate = availableDays > 0 ? (double) monthlyBooked / availableDays : 0.0;
 
-        stats.setOccupancyRate(Double.valueOf(occupancyRate));
+        double roundedOccupancyRate = new BigDecimal(occupancyRate)
+                .setScale(2, RoundingMode.HALF_UP)
+                .doubleValue();
+
+        stats.setOccupancyRate(roundedOccupancyRate);
 
         // Active bookings
         stats.setActiveBookings(bookingRepo.getActiveBookings(userDetails.getId(), startOfMonth, endOfMonth));
