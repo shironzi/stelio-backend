@@ -10,6 +10,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.aaronjosh.real_estate_app.dto.booking.BookingCalendarResDto;
@@ -34,6 +35,9 @@ public class StatsService {
 
     @Autowired
     private PropertyStatsRepo propertyStatsRepo;
+
+    @Value("${CLOUDFLARE_R2_PUBLIC_URL}")
+    private String publicUrl;
 
     public PropertyStatsResDto dashboard(UUID propertyId) {
         UserDetails user = userService.getUserDetails();
@@ -155,25 +159,29 @@ public class StatsService {
         stats.setActiveBookings(bookingRepo.getActiveBookings(userDetails.getId(), startOfMonth, endOfMonth));
 
         // Todays Checkins
-        LocalDateTime startToday = now.toLocalDate().withDayOfMonth(now.toLocalDate().lengthOfMonth()).atTime(0, 0, 0);
-        stats.setTodaysCheckins(bookingRepo.getTodaysCheckins(userDetails.getId(), startToday, endOfMonth));
+        LocalDateTime startToday = now.toLocalDate().atStartOfDay();
+        LocalDateTime endToday = now.toLocalDate().atTime(23, 59, 59);
+        stats.setTodaysCheckins(bookingRepo.getTodaysCheckins(userDetails.getId(), startToday, endToday));
 
         // Top 3 Properties
         List<PropertyResPerformanceDto> properties = new ArrayList<>();
-        for (Object[] res : bookingRepo.getTopRevenueProperties(userDetails.getId())) {
-            String title = (String) res[0];
-            String address = (String) res[1];
-            Long totalBookings = (Long) res[2];
-            Double totalRevenue = (Double) res[3];
-            Long totalNightBooked = (Long) res[4];
-            LocalDateTime createdAt = (LocalDateTime) res[5];
+        for (Object[] res : bookingRepo.findTopRevenueProperties(userDetails.getId())) {
+            UUID propertyId = (UUID) res[0];
+            String title = (String) res[1];
+            String address = (String) res[2];
+            Long totalBookings = (Long) res[3];
+            Double totalRevenue = (Double) res[4];
+            Long totalNightBooked = (Long) res[5];
+            LocalDateTime createdAt = (LocalDateTime) res[6];
+            String imageUrl = publicUrl + "/" + res[7];
 
             long totalAvailableDays = ChronoUnit.DAYS.between(createdAt, now);
             double propertyOccupancyRate = totalAvailableDays > 0 ? (double) totalNightBooked / totalAvailableDays
                     : 0.0;
 
-            PropertyResPerformanceDto dto = new PropertyResPerformanceDto(title, address, totalBookings, totalRevenue,
-                    propertyOccupancyRate);
+            PropertyResPerformanceDto dto = new PropertyResPerformanceDto(propertyId, title, address, totalBookings,
+                    totalRevenue, propertyOccupancyRate, imageUrl);
+
             properties.add(dto);
         }
 

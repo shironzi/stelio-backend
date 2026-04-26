@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -41,21 +42,25 @@ public class StatsController {
 
     @GetMapping
     public ResponseEntity<?> stats() {
-        StatsResDto stats = statsService.stats();
+        try {
+            StatsResDto stats = statsService.stats();
 
-        Map<String, Object> summary = new HashMap<>();
-        summary.put("totalRevenue", stats.getTotalRevenue());
-        summary.put("monthlyRevenue", stats.getCurrentMonthRevenue());
-        summary.put("monthlyRevenueComparison", stats.getCurrentMonthRevenueVsLastMonth());
-        summary.put("occupancyRate", stats.getOccupancyRate());
-        summary.put("activeBookings", stats.getActiveBookings());
-        summary.put("todaysCheckins", stats.getTodaysCheckins());
+            Map<String, Object> summary = new HashMap<>();
+            summary.put("totalRevenue", stats.getTotalRevenue());
+            summary.put("monthlyRevenue", stats.getCurrentMonthRevenue());
+            summary.put("monthlyRevenueComparison", stats.getCurrentMonthRevenueVsLastMonth());
+            summary.put("occupancyRate", stats.getOccupancyRate());
+            summary.put("activeBookings", stats.getActiveBookings());
+            summary.put("todaysCheckins", stats.getTodaysCheckins());
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("summary", summary);
-        response.put("properties", stats.getProperties());
-        response.put("success", true);
+            Map<String, Object> response = new HashMap<>();
+            response.put("summary", summary);
+            response.put("properties", stats.getProperties());
+            response.put("success", true);
 
-        return ResponseEntity.ok(response);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error fetching stats");
+        }
     }
 }
