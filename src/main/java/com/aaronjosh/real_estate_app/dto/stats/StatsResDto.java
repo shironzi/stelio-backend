@@ -10,8 +10,8 @@ import lombok.Data;
 public class StatsResDto {
 
     private BigDecimal totalRevenue;
-    private BigDecimal monthlyRevenue;
-    private BigDecimal monthlyRevenueComparison;
+    private BigDecimal currentMonthRevenue;
+    private BigDecimal currentMonthRevenueVsLastMonth;
 
     private Double occupancyRate;
     private Integer activeBookings;

@@ -1,5 +1,6 @@
 package com.aaronjosh.real_estate_app.controllers;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +46,8 @@ public class StatsController {
 
         Map<String, Object> metrics = new HashMap<>();
         metrics.put("totalRevenue", stats.getTotalRevenue());
-        metrics.put("monthlyRevenue", stats.getMonthlyRevenue());
+        metrics.put("monthlyRevenue", stats.getCurrentMonthRevenue());
+        metrics.put("monthlyRevenueComparison", stats.getCurrentMonthRevenueVsLastMonth());
         metrics.put("occupancyRate", stats.getOccupancyRate());
         metrics.put("activeBookings", stats.getActiveBookings());
         metrics.put("todaysCheckins", stats.getTodaysCheckins());

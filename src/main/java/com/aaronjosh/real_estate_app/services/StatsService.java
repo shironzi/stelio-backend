@@ -114,23 +114,43 @@ public class StatsService {
 
         LocalDateTime now = LocalDateTime.now();
 
-        // Total revenue
-        stats.setTotalRevenue(bookingRepo.getTotalRevenue(userDetails.getId()));
-
-        // Monthly revenue
+        // Current Month
         LocalDateTime startOfMonth = now.toLocalDate().withDayOfMonth(1).atStartOfDay();
         LocalDateTime endOfMonth = now.toLocalDate().withDayOfMonth(now.toLocalDate().lengthOfMonth()).atTime(23, 59,
                 59);
 
-        stats.setMonthlyRevenue(bookingRepo.getMonthlyRevenue(userDetails.getId(), startOfMonth, endOfMonth));
-
-        // Last Month Revenue
+        // Last Month
         LocalDateTime startOfLastMonth = now.minusMonths(1).toLocalDate().withDayOfMonth(1).atStartOfDay();
         LocalDateTime endOfLastMonth = now.minusMonths(1).toLocalDate()
                 .withDayOfMonth(now.minusMonths(1).toLocalDate().lengthOfMonth()).atTime(23, 59, 59);
 
-        stats.setMonthlyRevenueComparison(
-                bookingRepo.getMonthlyRevenue(userDetails.getId(), startOfLastMonth, endOfLastMonth));
+        // Total revenue
+        stats.setTotalRevenue(bookingRepo.getTotalRevenue(userDetails.getId()));
+
+        // Current Month Revenue
+        BigDecimal currentMonthRevenue = bookingRepo.getMonthlyRevenue(userDetails.getId(), startOfMonth, endOfMonth);
+        stats.setCurrentMonthRevenue(currentMonthRevenue);
+
+        // Last Month Revenue
+        BigDecimal lastMonthRevenue = bookingRepo.getMonthlyRevenue(userDetails.getId(), startOfLastMonth,
+                endOfLastMonth);
+
+        // Comparing the last month and current month
+        BigDecimal revenueComparisonPercentage = BigDecimal.ZERO;
+
+        if (lastMonthRevenue.compareTo(BigDecimal.ZERO) > 0) {
+            revenueComparisonPercentage = currentMonthRevenue.subtract(lastMonthRevenue)
+                    .divide(lastMonthRevenue, 4, RoundingMode.HALF_UP)
+                    .multiply(BigDecimal.valueOf(100));
+        } else {
+            if (currentMonthRevenue.compareTo(BigDecimal.ZERO) > 0) {
+                revenueComparisonPercentage = BigDecimal.valueOf(100);
+            } else {
+                revenueComparisonPercentage = BigDecimal.ZERO;
+            }
+        }
+
+        stats.setCurrentMonthRevenueVsLastMonth(revenueComparisonPercentage);
 
         // Occupancy Rate
         Integer monthlyBooked = bookingRepo.getMonthlyTotalBooked(userDetails.getId(), startOfMonth, now);

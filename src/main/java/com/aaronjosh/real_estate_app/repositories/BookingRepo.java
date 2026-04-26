@@ -106,12 +106,17 @@ public interface BookingRepo extends JpaRepository<BookingEntity, UUID> {
       @Param("end") LocalDateTime end);
 
   @Query("""
-          SELECT p.title, p.address, COUNT(b), COALESCE(SUM(b.price), 0), COALESCE(SUM(b.totalNights), 0), p.createdAt
+          SELECT p.title, p.address,
+                 COUNT(CASE WHEN b.status = 'COMPLETED' THEN 1 ELSE NULL END) AS completedBookings,
+                 COALESCE(SUM(CASE WHEN b.status = 'COMPLETED' THEN b.price ELSE 0 END), 0) AS totalRevenue,
+                 COALESCE(SUM(CASE WHEN b.status = 'COMPLETED' THEN b.totalNights ELSE 0 END), 0) AS totalNights,
+                 p.createdAt
           FROM PropertyEntity p
           LEFT JOIN p.bookings b
           WHERE p.host.id = :userId
           GROUP BY p.id
-          ORDER BY SUM(b.price) DESC
+          ORDER BY totalRevenue DESC
+          LIMIT 3
       """)
   List<Object[]> getTopRevenueProperties(@Param("userId") UUID userId);
 }
