@@ -35,6 +35,7 @@ public class BookingEntity {
         CONFIRMED, // Payment completed or host approved
         REJECTED, // Host rejected request
         NOSHOW, // Guest didn’t arrive
+        INPROGRESS, // Guests are currently staying
         COMPLETED, // Stay completed
         EXPIRED // expired at 10 mins if not paid
     }

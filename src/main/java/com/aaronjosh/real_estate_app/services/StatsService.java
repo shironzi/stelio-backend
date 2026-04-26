@@ -2,17 +2,19 @@ package com.aaronjosh.real_estate_app.services;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.aaronjosh.real_estate_app.dto.stats.ActiveBookingsDto;
+import com.aaronjosh.real_estate_app.dto.stats.BookingStatsDto;
 import com.aaronjosh.real_estate_app.dto.stats.PropertyResPerformanceDto;
 import com.aaronjosh.real_estate_app.dto.stats.StatsResDto;
 import com.aaronjosh.real_estate_app.dto.user.UserDetails;
@@ -115,5 +117,71 @@ public class StatsService {
         stats.setProperties(properties);
 
         return stats;
+    }
+
+    public BookingStatsDto bookingStats() {
+        UserDetails userDetails = userService.getUserDetails();
+
+        BookingStatsDto dto = new BookingStatsDto();
+
+        LocalDateTime now = LocalDateTime.now();
+
+        // Upcoming Bookings
+        Integer upcomingBookings = bookingRepo.countUpcomingBookings(userDetails.getId(), now);
+        dto.setUpcomingCheckins(upcomingBookings);
+
+        // Next Booking
+        LocalDateTime nextBooking = bookingRepo.findNextBooking(userDetails.getId(), now);
+        Duration duration = Duration.between(now, nextBooking);
+
+        if (duration.toDays() >= 1) {
+            long days = duration.toDays();
+            long remainingHours = duration.minusDays(days).toHours();
+            dto.setNextBooking(days + " Days and " + remainingHours + " hours");
+        } else {
+            long hours = duration.toHours();
+            dto.setNextBooking(hours + " hours");
+        }
+
+        // Current Guests
+        Integer currentGuests = bookingRepo.countCurrentGuests(userDetails.getId());
+        dto.setCurrentGuests(currentGuests);
+
+        // Checkout Today
+        LocalDateTime startToday = now.toLocalDate().atStartOfDay();
+        LocalDateTime endToday = now.toLocalDate().atTime(23, 59, 59);
+
+        Integer checkOutToday = bookingRepo.countCheckOutToday(userDetails.getId(), startToday, endToday);
+        dto.setCheckOutToday(checkOutToday);
+
+        List<ActiveBookingsDto> activeBookings = new ArrayList<>();
+
+        for (Object[] obj : bookingRepo.findActiveBookings(userDetails.getId(), now)) {
+            String profilePictureKey = (String) obj[0];
+            String firstname = (String) obj[1];
+            String lastname = (String) obj[2];
+            String propertyTitle = (String) obj[3];
+            String propertyAddress = (String) obj[4];
+            LocalDateTime startDateTime = (LocalDateTime) obj[5];
+            LocalDateTime endDateTime = (LocalDateTime) obj[6];
+            Double price = (Double) obj[7];
+            String status = (String) obj[8];
+
+            ActiveBookingsDto booking = new ActiveBookingsDto(
+                    publicUrl + "/" + profilePictureKey,
+                    firstname + " " + lastname,
+                    propertyTitle,
+                    propertyAddress,
+                    startDateTime,
+                    endDateTime,
+                    price,
+                    status);
+
+            activeBookings.add(booking);
+        }
+
+        dto.setActiveBookings(activeBookings);
+
+        return dto;
     }
 }

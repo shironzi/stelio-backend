@@ -10,6 +10,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import com.aaronjosh.real_estate_app.dto.stats.ActiveBookingsDto;
+import com.aaronjosh.real_estate_app.dto.stats.BookingStatsDto;
 import com.aaronjosh.real_estate_app.dto.stats.StatsResDto;
 import com.aaronjosh.real_estate_app.services.StatsService;
 
@@ -41,6 +43,18 @@ public class StatsController {
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error fetching stats");
+        }
+    }
+
+    @GetMapping("/bookings")
+    public ResponseEntity<?> bookingsStats() {
+
+        try {
+            BookingStatsDto stats = statsService.bookingStats();
+
+            return ResponseEntity.ok(stats);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error fetching bookings");
         }
     }
 }
