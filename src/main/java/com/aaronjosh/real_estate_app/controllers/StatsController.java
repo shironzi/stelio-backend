@@ -1,5 +1,6 @@
 package com.aaronjosh.real_estate_app.controllers;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -13,11 +14,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.aaronjosh.real_estate_app.dto.booking.BookingCalendarResDto;
 import com.aaronjosh.real_estate_app.dto.booking.PropertyStatsResDto;
+import com.aaronjosh.real_estate_app.dto.stats.StatsResDto;
 import com.aaronjosh.real_estate_app.services.StatsService;
 
 @Controller
 @RequestMapping("/api/properties/stats")
-public class PropertyStatsController {
+public class StatsController {
 
     @Autowired
     private StatsService statsService;
@@ -39,6 +41,19 @@ public class PropertyStatsController {
 
     @GetMapping
     public ResponseEntity<?> stats() {
-        return ResponseEntity.ok(Map.of("stats", statsService.stats()));
+        StatsResDto stats = statsService.stats();
+
+        Map<String, Object> metrics = new HashMap<>();
+        metrics.put("totalRevenue", stats.getTotalRevenue());
+        metrics.put("monthlyRevenue", stats.getMonthlyRevenue());
+        metrics.put("occupancyRate", stats.getOccupancyRate());
+        metrics.put("activeBookings", stats.getActiveBookings());
+        metrics.put("todaysCheckins", stats.getTodaysCheckins());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("metrics", metrics);
+        response.put("properties", stats.getProperties());
+
+        return ResponseEntity.ok(response);
     }
 }
