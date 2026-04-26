@@ -51,7 +51,7 @@ public class SecurityConfig {
                                                 .hasRole("OWNER")
                                                 .requestMatchers(HttpMethod.GET, "/api/properties/", "/api/image/**")
                                                 .permitAll()
-                                                .requestMatchers("/api/webhooks/**").permitAll()
+                                                .requestMatchers("/api/webhook/**").permitAll()
                                                 .requestMatchers("/ws/**", "/app/**").permitAll()
                                                 .requestMatchers("/api/files/**").permitAll()
                                                 .anyRequest().authenticated())

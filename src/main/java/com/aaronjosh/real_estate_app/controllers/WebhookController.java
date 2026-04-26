@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.aaronjosh.real_estate_app.services.PaymentService;
 
 @RestController
-@RequestMapping("/api/webhooks")
+@RequestMapping("/api/webhook")
 public class WebhookController {
 
     @Autowired

@@ -33,7 +33,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         boolean isPublicPropertiesGet = path.equals("/api/properties/") && method.equalsIgnoreCase("GET");
         boolean isPublicImageGet = path.startsWith("/api/image/") && method.equalsIgnoreCase("GET");
         boolean isAuthEndpoint = path.equals("/api/auth/register") || path.equals("/api/auth/login");
-        boolean isWebhookEndpoint = path.startsWith("/api/webhooks/");
+        boolean isWebhookEndpoint = path.startsWith("/api/webhook/");
         boolean isWebSocketEndpoint = path.startsWith("/ws");
         boolean isFileEndpoint = path.startsWith("/api/files") && method.equalsIgnoreCase("GET");
 
