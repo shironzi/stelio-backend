@@ -13,16 +13,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.aaronjosh.real_estate_app.dto.booking.BookingCalendarResDto;
-import com.aaronjosh.real_estate_app.dto.booking.PropertyStatsResDto;
 import com.aaronjosh.real_estate_app.dto.stats.PropertyResPerformanceDto;
 import com.aaronjosh.real_estate_app.dto.stats.StatsResDto;
 import com.aaronjosh.real_estate_app.dto.user.UserDetails;
-import com.aaronjosh.real_estate_app.models.BookingEntity;
-import com.aaronjosh.real_estate_app.models.PropertyStats;
-import com.aaronjosh.real_estate_app.models.BookingEntity.BookingStatus;
 import com.aaronjosh.real_estate_app.repositories.BookingRepo;
-import com.aaronjosh.real_estate_app.repositories.PropertyStatsRepo;
 
 @Service
 public class StatsService {
@@ -33,77 +27,10 @@ public class StatsService {
     @Autowired
     private BookingRepo bookingRepo;
 
-    @Autowired
-    private PropertyStatsRepo propertyStatsRepo;
-
     @Value("${CLOUDFLARE_R2_PUBLIC_URL}")
     private String publicUrl;
 
-    public PropertyStatsResDto dashboard(UUID propertyId) {
-        UserDetails user = userService.getUserDetails();
-
-        PropertyStats propertyStats = propertyStatsRepo.findByProperty_id(Objects.requireNonNull(propertyId));
-
-        PropertyStatsResDto statsDto = new PropertyStatsResDto();
-
-        statsDto.setName(user.getFirstname());
-
-        // Key Metrics
-        statsDto.setEarningsToday(propertyStats.getEarningsToday());
-        statsDto.setUpcomingCheckIns(propertyStats.getUpcomingCheckIns());
-        statsDto.setPendingReviews(propertyStats.getPendingReviews());
-
-        // Data Analytics
-        statsDto.setMonthlyEarnings(propertyStats.getMonthlyEarnings());
-        statsDto.setOccupancyRate(propertyStats.getOccupancyRate());
-
-        // Booking Sumarry
-        statsDto.setPending(propertyStats.getPending());
-        statsDto.setApproved(propertyStats.getApproved());
-        statsDto.setDeclined(propertyStats.getDeclined());
-        statsDto.setCancelled(propertyStats.getCancelled());
-        statsDto.setUpcomingBookings(propertyStats.getUpcomingBookings());
-
-        return statsDto;
-    }
-
-    public List<BookingCalendarResDto> getCalendar(UUID propertyId) {
-        List<BookingCalendarResDto> bookingList = new ArrayList<>();
-
-        List<BookingEntity> bookings = bookingRepo.findAllByPropertyId(propertyId);
-
-        LocalDateTime date = LocalDateTime.now();
-
-        for (BookingEntity booking : bookings) {
-            // only show pending and approved bookings
-            if (booking.getStatus() == BookingStatus.REJECTED
-                    || booking.getStatus() == BookingStatus.CANCELLED)
-                continue;
-
-            // Skip bookings that already ended
-            if (booking.getStartDateTime().isBefore(date) && booking.getEndDateTime().isBefore(date))
-                continue;
-
-            BookingCalendarResDto dto = new BookingCalendarResDto();
-            dto.setId(booking.getId());
-            dto.setEndDateTime(booking.getEndDateTime());
-            dto.setStartDateTime(booking.getStartDateTime());
-            dto.setStatus(booking.getStatus());
-
-            bookingList.add(dto);
-        }
-
-        return bookingList;
-    }
-
-    // 1. get properties that belongs to user
-    // 2. compute the total revenue
-    // 3. compute Monthly Revenue
-    // 4. comppute occupancy rate
-    // 4. compute active bookings
-    // 5. return the first 5 bookings
-
-    public StatsResDto stats() {
+    public StatsResDto overview() {
         UserDetails userDetails = userService.getUserDetails();
 
         StatsResDto stats = new StatsResDto();
