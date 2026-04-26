@@ -1,6 +1,5 @@
 package com.aaronjosh.real_estate_app.controllers;
 
-import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,7 +18,7 @@ import com.aaronjosh.real_estate_app.dto.stats.StatsResDto;
 import com.aaronjosh.real_estate_app.services.StatsService;
 
 @Controller
-@RequestMapping("/api/properties/stats")
+@RequestMapping("/api/stats")
 public class StatsController {
 
     @Autowired
@@ -44,16 +43,16 @@ public class StatsController {
     public ResponseEntity<?> stats() {
         StatsResDto stats = statsService.stats();
 
-        Map<String, Object> metrics = new HashMap<>();
-        metrics.put("totalRevenue", stats.getTotalRevenue());
-        metrics.put("monthlyRevenue", stats.getCurrentMonthRevenue());
-        metrics.put("monthlyRevenueComparison", stats.getCurrentMonthRevenueVsLastMonth());
-        metrics.put("occupancyRate", stats.getOccupancyRate());
-        metrics.put("activeBookings", stats.getActiveBookings());
-        metrics.put("todaysCheckins", stats.getTodaysCheckins());
+        Map<String, Object> summary = new HashMap<>();
+        summary.put("totalRevenue", stats.getTotalRevenue());
+        summary.put("monthlyRevenue", stats.getCurrentMonthRevenue());
+        summary.put("monthlyRevenueComparison", stats.getCurrentMonthRevenueVsLastMonth());
+        summary.put("occupancyRate", stats.getOccupancyRate());
+        summary.put("activeBookings", stats.getActiveBookings());
+        summary.put("todaysCheckins", stats.getTodaysCheckins());
 
         Map<String, Object> response = new HashMap<>();
-        response.put("metrics", metrics);
+        response.put("summary", summary);
         response.put("properties", stats.getProperties());
 
         return ResponseEntity.ok(response);

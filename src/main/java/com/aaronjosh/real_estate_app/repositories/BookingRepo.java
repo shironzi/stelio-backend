@@ -1,7 +1,6 @@
 package com.aaronjosh.real_estate_app.repositories;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -14,7 +13,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.aaronjosh.real_estate_app.dto.stats.PropertyResPerformanceDto;
 import com.aaronjosh.real_estate_app.models.BookingEntity;
 import com.aaronjosh.real_estate_app.models.BookingEntity.BookingStatus;
 

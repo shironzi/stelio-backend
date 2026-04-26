@@ -2,10 +2,7 @@ package com.aaronjosh.real_estate_app.services;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.Duration;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.Month;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,11 +18,9 @@ import com.aaronjosh.real_estate_app.dto.stats.PropertyResPerformanceDto;
 import com.aaronjosh.real_estate_app.dto.stats.StatsResDto;
 import com.aaronjosh.real_estate_app.dto.user.UserDetails;
 import com.aaronjosh.real_estate_app.models.BookingEntity;
-import com.aaronjosh.real_estate_app.models.PropertyEntity;
 import com.aaronjosh.real_estate_app.models.PropertyStats;
 import com.aaronjosh.real_estate_app.models.BookingEntity.BookingStatus;
 import com.aaronjosh.real_estate_app.repositories.BookingRepo;
-import com.aaronjosh.real_estate_app.repositories.PropertyRepository;
 import com.aaronjosh.real_estate_app.repositories.PropertyStatsRepo;
 
 @Service
@@ -39,9 +34,6 @@ public class StatsService {
 
     @Autowired
     private PropertyStatsRepo propertyStatsRepo;
-
-    @Autowired
-    private PropertyRepository propertyRepo;
 
     public PropertyStatsResDto dashboard(UUID propertyId) {
         UserDetails user = userService.getUserDetails();
