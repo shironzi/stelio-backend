@@ -54,6 +54,7 @@ public class StatsController {
         Map<String, Object> response = new HashMap<>();
         response.put("summary", summary);
         response.put("properties", stats.getProperties());
+        response.put("success", true);
 
         return ResponseEntity.ok(response);
     }
