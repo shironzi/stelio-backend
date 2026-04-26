@@ -59,6 +59,9 @@ public class BookingEntity {
     private String contactPhone;
     private LocalDateTime expiresAt;
 
+    private Double price;
+    private Integer totalNights;
+
     @Column(unique = true)
     private String stripePaymentIntentId;
 

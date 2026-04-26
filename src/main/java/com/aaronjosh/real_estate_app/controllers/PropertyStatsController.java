@@ -13,27 +13,32 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.aaronjosh.real_estate_app.dto.booking.BookingCalendarResDto;
 import com.aaronjosh.real_estate_app.dto.booking.PropertyStatsResDto;
-import com.aaronjosh.real_estate_app.services.PropertyStatsService;
+import com.aaronjosh.real_estate_app.services.StatsService;
 
 @Controller
 @RequestMapping("/api/properties/stats")
 public class PropertyStatsController {
 
     @Autowired
-    private PropertyStatsService propertyStatsService;
+    private StatsService statsService;
 
     @GetMapping("/{propertyId}")
     public ResponseEntity<?> dashboard(@PathVariable UUID propertyId) {
-        PropertyStatsResDto stats = propertyStatsService.dashboard(propertyId);
+        PropertyStatsResDto stats = statsService.dashboard(propertyId);
 
         return ResponseEntity.ok(Map.of("success", true, "message", "success", "stats", stats));
     }
 
     @GetMapping("/calendar/{propertyId}")
     public ResponseEntity<?> getCalendar(@PathVariable UUID propertyId) {
-        List<BookingCalendarResDto> calendar = propertyStatsService.getCalendar(propertyId);
+        List<BookingCalendarResDto> calendar = statsService.getCalendar(propertyId);
 
         return ResponseEntity
                 .ok(Map.of("success", true, "message", "successfully retrieved the calendar", "calendar", calendar));
+    }
+
+    @GetMapping
+    public ResponseEntity<?> stats() {
+        return ResponseEntity.ok(Map.of("stats", statsService.stats()));
     }
 }

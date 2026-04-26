@@ -1,5 +1,7 @@
 package com.aaronjosh.real_estate_app.repositories;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -12,6 +14,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import com.aaronjosh.real_estate_app.dto.stats.PropertyResPerformanceDto;
 import com.aaronjosh.real_estate_app.models.BookingEntity;
 import com.aaronjosh.real_estate_app.models.BookingEntity.BookingStatus;
 
@@ -44,4 +47,71 @@ public interface BookingRepo extends JpaRepository<BookingEntity, UUID> {
       @Param("requestEnd") LocalDateTime requestEnd);
 
   Optional<BookingEntity> findByStripePaymentIntentId(String id);
+
+  @Query("""
+          SELECT COALESCE(SUM(b.price), 0)
+          FROM BookingEntity b
+          JOIN b.property p
+          WHERE b.status = 'COMPLETED'
+          AND p.host.id = :userId
+      """)
+  BigDecimal getTotalRevenue(@Param("userId") UUID userId);
+
+  @Query("""
+          SELECT COALESCE(SUM(b.price), 0)
+          FROM BookingEntity b
+          JOIN b.property p
+          WHERE b.status = 'COMPLETED'
+          AND p.host.id = :userId
+          AND (b.startDateTime <= :end AND b.endDateTime >= :start)
+      """)
+  BigDecimal getMonthlyRevenue(@Param("userId") UUID userId,
+      @Param("start") LocalDateTime start,
+      @Param("end") LocalDateTime end);
+
+  @Query("""
+          SELECT COALESCE(SUM(b.totalNights), 0)
+          FROM BookingEntity b
+          JOIN b.property p
+          WHERE b.status = 'COMPLETED'
+          AND p.host.id = :userId
+          AND(b.startDateTime <= :end AND b.endDateTime >= :start)
+      """)
+  Integer getMonthlyTotalBooked(@Param("userId") UUID userId,
+      @Param("start") LocalDateTime start,
+      @Param("end") LocalDateTime end);
+
+  @Query("""
+          SELECT COUNT(b)
+          FROM BookingEntity b
+          JOIN b.property p
+          WHERE b.status = 'CONFIRMED'
+          AND p.host.id = :userId
+          AND (b.startDateTime <= :end AND b.endDateTime >= :start)
+      """)
+  Integer getActiveBookings(@Param("userId") UUID userId,
+      @Param("start") LocalDateTime start,
+      @Param("end") LocalDateTime end);
+
+  @Query("""
+          SELECT COUNT(b)
+          FROM BookingEntity b
+          JOIN b.property p
+          WHERE b.status = 'CONFIRMED'
+          AND p.host.id = :userId
+          AND (b.startDateTime <= :end AND b.endDateTime >= :start)
+      """)
+  Integer getTodaysCheckins(@Param("userId") UUID userId,
+      @Param("start") LocalDateTime start,
+      @Param("end") LocalDateTime end);
+
+  @Query("""
+          SELECT p.title, p.address, COUNT(b), COALESCE(SUM(b.price), 0), COALESCE(SUM(b.totalNights), 0), p.createdAt
+          FROM PropertyEntity p
+          LEFT JOIN p.bookings b
+          WHERE p.host.id = :userId
+          GROUP BY p.id
+          ORDER BY SUM(b.price) DESC
+      """)
+  List<Object[]> getTopRevenueProperties(@Param("userId") UUID userId);
 }

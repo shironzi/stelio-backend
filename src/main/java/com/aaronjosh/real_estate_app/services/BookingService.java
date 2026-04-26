@@ -7,6 +7,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.Objects;
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,11 +73,15 @@ public class BookingService {
                             dto.setContactPhone(booking.getContactPhone());
                             dto.setStatus(booking.getStatus().toString());
 
+                            dto.setPrice(BigDecimal.valueOf(0));
+                            if (booking.getPrice() != null) {
+                                dto.setPrice(BigDecimal.valueOf(booking.getPrice()));
+                            }
+
                             // Property fields
                             dto.setPropertyId(booking.getProperty().getId());
                             dto.setTitle(booking.getProperty().getTitle());
                             dto.setDescription(booking.getProperty().getDescription());
-                            dto.setPrice(booking.getProperty().getPrice());
                             dto.setPropertyType(booking.getProperty().getPropertyType().toString());
                             dto.setMaxGuest(booking.getProperty().getMaxGuest());
                             dto.setTotalBedroom(booking.getProperty().getTotalBedroom());
@@ -191,15 +196,23 @@ public class BookingService {
         UserEntity userEntity = userRepo.findById(user.getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "User not found"));
 
+        long totalNights = Duration.between(bookingInfo.getStart(), bookingInfo.getEnd()).toDays();
+        if (totalNights <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "End date must be after start date.");
+        }
+
         // Create booking entity
         BookingEntity booking = new BookingEntity();
+
         booking.setProperty(property);
         booking.setStatus(BookingStatus.PENDING_PAYMENT);
         booking.setUser(userEntity);
         booking.setStartDateTime(bookingInfo.getStart());
         booking.setEndDateTime(bookingInfo.getEnd());
         booking.setContactPhone(bookingInfo.getContactPhone());
-        booking.setBalance(property.getPrice());
+        booking.setBalance(property.getPrice().multiply(BigDecimal.valueOf(totalNights)));
+        booking.setTotalNights((int) totalNights);
+        booking.setPrice(property.getPrice().multiply(BigDecimal.valueOf(totalNights)).doubleValue());
 
         if (bookingInfo.getGuestNames() != null && !bookingInfo.getGuestNames().isEmpty()) {
             booking.setGuestNames(bookingInfo.getGuestNames());
