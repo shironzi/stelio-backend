@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -135,16 +136,19 @@ public class StatsService {
         dto.setUpcomingCheckins(upcomingBookings);
 
         // Next Booking
-        LocalDateTime nextBooking = bookingRepo.findNextBooking(userDetails.getId(), now);
-        Duration duration = Duration.between(now, nextBooking);
+        Optional<LocalDateTime> nextBooking = bookingRepo.findNextBooking(userDetails.getId(), now);
 
-        if (duration.toDays() >= 1) {
-            long days = duration.toDays();
-            long remainingHours = duration.minusDays(days).toHours();
-            dto.setNextBooking(days + " Days and " + remainingHours + " hours");
-        } else {
-            long hours = duration.toHours();
-            dto.setNextBooking(hours + " hours");
+        if (nextBooking.isPresent()) {
+            Duration duration = Duration.between(now, nextBooking.get());
+
+            if (duration.toDays() >= 1) {
+                long days = duration.toDays();
+                long remainingHours = duration.minusDays(days).toHours();
+                dto.setNextBooking(days + " Days and " + remainingHours + " hours");
+            } else {
+                long hours = duration.toHours();
+                dto.setNextBooking(hours + " hours");
+            }
         }
 
         // Current Guests
@@ -155,7 +159,8 @@ public class StatsService {
         LocalDateTime startToday = now.toLocalDate().atStartOfDay();
         LocalDateTime endToday = now.toLocalDate().atTime(23, 59, 59);
 
-        Integer checkOutToday = bookingRepo.countCheckOutToday(userDetails.getId(), startToday, endToday);
+        Integer checkOutToday = bookingRepo.countCheckOutToday(userDetails.getId(),
+                startToday, endToday);
         dto.setCheckOutToday(checkOutToday);
 
         List<ActiveBookingsDto> activeBookings = new ArrayList<>();
