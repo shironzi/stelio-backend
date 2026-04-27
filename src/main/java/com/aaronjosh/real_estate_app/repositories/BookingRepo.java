@@ -9,6 +9,7 @@ import java.util.UUID;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -186,4 +187,17 @@ public interface BookingRepo extends JpaRepository<BookingEntity, UUID> {
                 ORDER BY startDateTime ASC
             """)
     List<Object[]> findActiveBookings(@Param("userId") UUID userId, @Param("dateTime") LocalDateTime dateTime);
+
+    @Modifying
+    @Query("UPDATE BookingEntity b SET b.status = :status WHERE b.status = 'CONFIRMED' AND b.startDateTime <= :now")
+    void updateBookingStatusBulk(@Param("status") BookingStatus status, @Param("now") LocalDateTime now);
+
+    @Query("""
+                SELECT b.id, u.id
+                FROM BookingEntity b
+                LEFT JOIN b.user u
+                WHERE b.status = 'CONFIRMED'
+                AND b.startDateTime <= :now
+            """)
+    List<Object[]> findBookingStatusAndPast(@Param("now") LocalDateTime now);
 }

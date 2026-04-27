@@ -2,6 +2,7 @@ package com.aaronjosh.real_estate_app.services;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -142,7 +143,11 @@ public class PaymentService {
                     .map(image -> publicUrl + "/" + image.getKey())
                     .collect(Collectors.toList()));
 
-            messagingTemplate.convertAndSendToUser(booking.getUser().getId().toString(), "/my-bookings", dto);
+            Map<String, String> update = new HashMap<>();
+            update.put("id", dto.getId().toString());
+            update.put("status", dto.getStatus().toString());
+
+            messagingTemplate.convertAndSendToUser(booking.getUser().getId().toString(), "/my-bookings", update);
         } catch (SignatureVerificationException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid signature");
         } catch (Exception e) {
