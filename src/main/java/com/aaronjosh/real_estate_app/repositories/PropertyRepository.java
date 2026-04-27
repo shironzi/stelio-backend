@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.boot.autoconfigure.data.web.SpringDataWebProperties.Pageable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -30,4 +32,6 @@ public interface PropertyRepository extends JpaRepository<PropertyEntity, UUID> 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT p FROM PropertyEntity p WHERE p.id = :id")
     Optional<PropertyEntity> findAndLockById(@Param("id") UUID id);
+
+    List<PropertyEntity> findTop15ByStatus(PropertyStatus status);
 }

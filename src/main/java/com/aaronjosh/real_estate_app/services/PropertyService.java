@@ -49,7 +49,7 @@ public class PropertyService {
     // get all active properties
     @Transactional(readOnly = true)
     public List<PropertyResDto> getProperties() {
-        List<PropertyEntity> properties = propertyRepo.findByStatus(PropertyStatus.ACTIVE);
+        List<PropertyEntity> properties = propertyRepo.findTop15ByStatus(PropertyStatus.ACTIVE);
 
         return propertyMapper.toDto(properties);
     }
@@ -101,6 +101,7 @@ public class PropertyService {
                 file.setContentType(image.getContentType());
                 file.setKey(key);
                 file.setPropertyEntity(property);
+                file.setIsPublic(true);
 
                 property.getImages().add(file);
             } catch (java.io.IOException e) {
