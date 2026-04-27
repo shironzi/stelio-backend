@@ -229,10 +229,7 @@ public class BookingService {
 
     @Transactional
     public Map<String, Object> reserve(UUID propertyId, BookingReqDto bookingInfo) {
-        UserDetails user = userService.getUserDetails();
-
-        UserEntity userEntity = userRepo.findById(user.getId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        UserEntity userEntity = userService.getUser();
 
         PropertyEntity property = propertyRepo.findById(Objects.requireNonNull(propertyId))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "property not found"));

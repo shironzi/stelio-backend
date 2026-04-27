@@ -18,7 +18,6 @@ import com.aaronjosh.real_estate_app.dto.user.UserDetails;
 import com.aaronjosh.real_estate_app.models.FileEntity;
 import com.aaronjosh.real_estate_app.models.PropertyStats;
 import com.aaronjosh.real_estate_app.models.PropertyEntity;
-import com.aaronjosh.real_estate_app.models.UserEntity;
 import com.aaronjosh.real_estate_app.models.PropertyEntity.PropertyStatus;
 import com.aaronjosh.real_estate_app.repositories.PropertyRepository;
 import com.aaronjosh.real_estate_app.repositories.UserRepository;
@@ -74,8 +73,6 @@ public class PropertyService {
     }
 
     public PropertyEntity addProperty(PropertyDto propertyDto) {
-        UserDetails user = userService.getUserDetails();
-
         // creating new property object
         PropertyEntity property = new PropertyEntity();
 
@@ -111,9 +108,7 @@ public class PropertyService {
             }
         }
 
-        UserEntity userEntity = userRepo.findById(user.getId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "User not found"));
-        property.setHost(userEntity);
+        property.setHost(userService.getUser());
 
         PropertyStats stats = new PropertyStats();
         stats.setProperty(property);

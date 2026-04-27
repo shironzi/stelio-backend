@@ -36,3 +36,5 @@ build/
 .env.*.local
 
 todo.txt
+TODO.md
+logs/

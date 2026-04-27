@@ -40,6 +40,13 @@ public class UserService {
         return null;
     }
 
+    public UserEntity getUser() {
+        UserDetails userDetails = getUserDetails();
+
+        return userRepository.findById(userDetails.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "User not found"));
+    }
+
     // Updating role into owner
     public LoginResDto becomeHost() {
         UserDetails userDetails = getUserDetails();
@@ -129,6 +136,7 @@ public class UserService {
             userRepository.save(user);
         } catch (java.io.IOException e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to upload profile picture", e);
+
         }
     }
 }

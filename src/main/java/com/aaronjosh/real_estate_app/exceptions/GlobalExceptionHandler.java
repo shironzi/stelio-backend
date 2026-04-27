@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
 
 import jakarta.persistence.PessimisticLockException;
+import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.web.bind.MethodArgumentNotValidException;
 
@@ -17,6 +18,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -31,6 +33,7 @@ public class GlobalExceptionHandler {
 
         @ExceptionHandler(EmailAlreadyExistsException.class)
         public ResponseEntity<?> handleEmailConflict(EmailAlreadyExistsException ex) {
+                log.warn("Registration conflict: {}", ex.getMessage());
                 return ResponseEntity.status(HttpStatus.CONFLICT)
                                 .body(Map.of(
                                                 "error", "Conflict",
@@ -39,6 +42,7 @@ public class GlobalExceptionHandler {
 
         @ExceptionHandler(PasswordNotMatchException.class)
         public ResponseEntity<?> handlePasswordMismatch(PasswordNotMatchException ex) {
+                log.warn("Password mismatch: {}", ex.getMessage());
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                                 .body(Map.of(
                                                 "error", "Bad Request",
@@ -51,12 +55,15 @@ public class GlobalExceptionHandler {
                 ex.getBindingResult().getFieldErrors()
                                 .forEach(error -> errors.put(error.getField(), error.getDefaultMessage()));
 
+                log.warn("Validation failed: {}", errors);
+
                 return ResponseEntity.badRequest()
                                 .body(Map.of("error", "Bad Request", "messages", errors));
         }
 
         @ExceptionHandler(Exception.class)
         public ResponseEntity<?> handleOtherExceptions(Exception ex) {
+                log.error("Unhandled exception occurred", ex);
 
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                                 .body(createErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR,
@@ -81,6 +88,8 @@ public class GlobalExceptionHandler {
                         CannotAcquireLockException.class
         })
         public ResponseEntity<?> handleConflictExceptions(Exception ex) {
+                log.warn("Database conflict or locking issue: {}", ex.getMessage());
+
                 return ResponseEntity.status(HttpStatus.CONFLICT)
                                 .body(Map.of(
                                                 "error", "Conflict",

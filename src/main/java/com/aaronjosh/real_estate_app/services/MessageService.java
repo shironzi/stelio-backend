@@ -114,10 +114,8 @@ public class MessageService {
     }
 
     public void createNewConversation(ConversationReqDto participant) {
-        UserDetails user = userService.getUserDetails();
+        UserEntity owner = userService.getUser();
 
-        UserEntity owner = userRepository.findById(user.getId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         UserEntity receiptient = userRepository.findById(participant.getParticipantId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
@@ -152,9 +150,7 @@ public class MessageService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Message cannot be empty");
         }
 
-        UserDetails user = userService.getUserDetails();
-        UserEntity userEntity = userRepository.findById(user.getId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        UserEntity user = userService.getUser();
 
         ParticipantEntity participant = participantRepo.findByConversationIdAndWhoJoinedId(conversationId, user.getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Conversation not found"));
@@ -164,7 +160,7 @@ public class MessageService {
         MessageEntity message = new MessageEntity();
         message.setMesssages(messageInfo.getMessage());
         message.setConversation(conversation);
-        message.setFrom(userEntity);
+        message.setFrom(user);
 
         // if (messageInfo.getFiles() != null && !messageInfo.getFiles().isEmpty()) {
         // List<FileEntity> files = messageInfo.getFiles().stream()
@@ -178,10 +174,10 @@ public class MessageService {
 
         MessageDto messageDto = new MessageDto();
 
-        messageDto.setUserId(userEntity.getId());
+        messageDto.setUserId(user.getId());
         messageDto.setMessage(message.getMesssages());
         // messageDto.setFilePaths(message.getFiles());
-        messageDto.setName(userEntity.getFullName());
+        messageDto.setName(user.getFullName());
         messageDto.setTimestamp(message.getCreatedAt());
 
         return messageDto;

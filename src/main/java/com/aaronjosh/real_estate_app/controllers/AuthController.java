@@ -26,6 +26,7 @@ import com.aaronjosh.real_estate_app.services.UserService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -41,62 +42,40 @@ public class AuthController {
      */
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginReqDto request) {
-        try {
-            LoginResDto res = authService.login(request.getEmail(), request.getPassword());
-            return ResponseEntity
-                    .ok(Map.of(
-                            "success", true,
-                            "message", "Login Successful",
-                            "token", res.getToken(),
-                            "userDetails", res));
-        } catch (BadCredentialsException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", "Server error"));
-        }
+        LoginResDto res = authService.login(request.getEmail(), request.getPassword());
+        return ResponseEntity
+                .ok(Map.of(
+                        "success", true,
+                        "message", "Login Successful",
+                        "token", res.getToken(),
+                        "userDetails", res));
     }
 
     /*
      * Handle the registration request and create new user account.
      */
-
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterReqDto userDto) {
-        try {
-            authService.register(userDto);
-            return ResponseEntity.status(HttpStatus.CREATED).body("Successfully created an account.");
-        } catch (EmailAlreadyExistsException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
-        } catch (PasswordNotMatchException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
+        authService.register(userDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body("Successfully created an account.");
     }
 
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletRequest request) {
-        try {
-            authService.logout(request);
-            return ResponseEntity.status(HttpStatus.OK).body("Successfully logout.");
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-        }
+        authService.logout(request);
+        return ResponseEntity.status(HttpStatus.OK).body("Successfully logout.");
     }
 
     @PostMapping("/verify")
     public ResponseEntity<?> verifyAuth() {
-        try {
-            UserDetails user = userService.getUserDetails();
+        UserDetails user = userService.getUserDetails();
 
-            return ResponseEntity.ok().body(Map.of(
-                    "success", true,
-                    "message", "Token is valid",
-                    "role", user.getRole(),
-                    "name", user.getFirstname() + user.getLastname(),
-                    "email", user.getEmail(),
-                    "id", user.getId()));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-        }
+        return ResponseEntity.ok().body(Map.of(
+                "success", true,
+                "message", "Token is valid",
+                "role", user.getRole(),
+                "name", user.getFirstname() + " " + user.getLastname(),
+                "email", user.getEmail(),
+                "id", user.getId()));
     }
-
 }
