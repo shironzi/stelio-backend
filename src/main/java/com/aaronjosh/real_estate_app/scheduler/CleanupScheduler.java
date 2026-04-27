@@ -50,13 +50,25 @@ public class CleanupScheduler {
 
     @Transactional
     @Scheduled(cron = "0 0/10 * * * ?")
-    public void updateBookingStatus() {
-        for (Object[] obj : bookingRepo.findBookingStatusAndPast(LocalDateTime.now())) {
+    public void updateBookingStatusInprogress() {
+        for (Object[] obj : bookingRepo.findBookingStatusAndInprogress(LocalDateTime.now())) {
             Map<String, Object> update = new HashMap<>();
             update.put("id", obj[0]);
             update.put("status", BookingStatus.INPROGRESS.toString());
             messagingTemplate.convertAndSendToUser(String.valueOf(obj[1]), "/my-bookings", update);
         }
-        bookingRepo.updateBookingStatusBulk(BookingStatus.INPROGRESS, LocalDateTime.now());
+        bookingRepo.updateBookingStatusBulkInprogress(BookingStatus.INPROGRESS, LocalDateTime.now());
+    }
+
+    @Transactional
+    @Scheduled(cron = "0 0/10 * * * ?")
+    public void updateBookingStatusCompleted() {
+        for (Object[] obj : bookingRepo.findBookingStatusAndCompleted(LocalDateTime.now())) {
+            Map<String, Object> update = new HashMap<>();
+            update.put("id", obj[0]);
+            update.put("status", BookingStatus.COMPLETED.toString());
+            messagingTemplate.convertAndSendToUser(String.valueOf(obj[1]), "/my-bookings", update);
+        }
+        bookingRepo.updateBookingStatusBulkCompleted(BookingStatus.INPROGRESS, LocalDateTime.now());
     }
 }

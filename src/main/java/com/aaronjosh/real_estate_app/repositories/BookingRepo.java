@@ -190,7 +190,11 @@ public interface BookingRepo extends JpaRepository<BookingEntity, UUID> {
 
     @Modifying
     @Query("UPDATE BookingEntity b SET b.status = :status WHERE b.status = 'CONFIRMED' AND b.startDateTime <= :now")
-    void updateBookingStatusBulk(@Param("status") BookingStatus status, @Param("now") LocalDateTime now);
+    void updateBookingStatusBulkInprogress(@Param("status") BookingStatus status, @Param("now") LocalDateTime now);
+
+    @Modifying
+    @Query("UPDATE BookingEntity b SET b.status = :status WHERE b.status = 'INPROGRESS' AND b.endDateTime > :now")
+    void updateBookingStatusBulkCompleted(@Param("status") BookingStatus status, @Param("now") LocalDateTime now);
 
     @Query("""
                 SELECT b.id, u.id
@@ -199,5 +203,14 @@ public interface BookingRepo extends JpaRepository<BookingEntity, UUID> {
                 WHERE b.status = 'CONFIRMED'
                 AND b.startDateTime <= :now
             """)
-    List<Object[]> findBookingStatusAndPast(@Param("now") LocalDateTime now);
+    List<Object[]> findBookingStatusAndInprogress(@Param("now") LocalDateTime now);
+
+    @Query("""
+                SELECT b.id, u.id
+                FROM BookingEntity b
+                LEFT JOIN b.user u
+                WHERE b.status = 'INPROGRESS'
+                AND b.endDateTime > :now
+            """)
+    List<Object[]> findBookingStatusAndCompleted(@Param("now") LocalDateTime now);
 }
