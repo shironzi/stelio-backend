@@ -183,7 +183,7 @@ public interface BookingRepo extends JpaRepository<BookingEntity, UUID> {
                 WHERE p.host.id = :userId
                 AND b.status IN ('INPROGRESS', 'CONFIRMED')
                 AND startDateTime > :dateTime
-                ORDER BY startDateTime DESC
+                ORDER BY startDateTime ASC
             """)
     List<Object[]> findActiveBookings(@Param("userId") UUID userId, @Param("dateTime") LocalDateTime dateTime);
 }

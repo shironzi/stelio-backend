@@ -10,7 +10,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import com.aaronjosh.real_estate_app.dto.stats.ActiveBookingsDto;
 import com.aaronjosh.real_estate_app.dto.stats.BookingStatsDto;
 import com.aaronjosh.real_estate_app.dto.stats.StatsResDto;
 import com.aaronjosh.real_estate_app.services.StatsService;
@@ -52,7 +51,19 @@ public class StatsController {
         try {
             BookingStatsDto stats = statsService.bookingStats();
 
-            return ResponseEntity.ok(stats);
+            Map<String, Object> summary = new HashMap<>();
+
+            summary.put("upcomingCheckins", stats.getUpcomingCheckins());
+            summary.put("nextBooking", stats.getNextBooking());
+            summary.put("currentGuests", stats.getCurrentGuests());
+            summary.put("checkOutToday", stats.getCheckOutToday());
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("summary", summary);
+            response.put("activeBookings", stats.getActiveBookings());
+            response.put("success", true);
+
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error fetching bookings");
         }
