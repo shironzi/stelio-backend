@@ -33,5 +33,6 @@ public interface PropertyRepository extends JpaRepository<PropertyEntity, UUID> 
     @Query("SELECT p FROM PropertyEntity p WHERE p.id = :id")
     Optional<PropertyEntity> findAndLockById(@Param("id") UUID id);
 
+    @EntityGraph(attributePaths = { "images" })
     List<PropertyEntity> findTop15ByStatus(PropertyStatus status);
 }
