@@ -14,6 +14,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 
+import com.aaronjosh.real_estate_app.dto.property.PropertyCardDto;
 import com.aaronjosh.real_estate_app.models.PropertyEntity;
 import com.aaronjosh.real_estate_app.models.PropertyEntity.PropertyStatus;
 
@@ -34,5 +35,22 @@ public interface PropertyRepository extends JpaRepository<PropertyEntity, UUID> 
     Optional<PropertyEntity> findAndLockById(@Param("id") UUID id);
 
     @EntityGraph(attributePaths = { "images" })
-    List<PropertyEntity> findTop15ByStatus(PropertyStatus status);
+    List<PropertyEntity> findTop10ByStatus(PropertyStatus status);
+
+    @Query("""
+            SELECT COUNT(p) FROM PropertyEntity p
+            """)
+    Integer findTotalProperties();
+
+    @Query("""
+                SELECT new com.aaronjosh.real_estate_app.dto.property.PropertyCardDto(
+                    p.id,
+                    p.title,
+                    p.address,
+                    i.key
+                )
+                FROM PropertyEntity p
+                LEFT JOIN p.images i ON i.isPrimary = true
+            """)
+    List<PropertyCardDto> fetchPropertyCards();
 }

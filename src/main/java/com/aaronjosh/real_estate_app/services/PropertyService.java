@@ -1,6 +1,7 @@
 package com.aaronjosh.real_estate_app.services;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -11,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
 
+import com.aaronjosh.real_estate_app.dto.property.PropertyCardDto;
 import com.aaronjosh.real_estate_app.dto.property.PropertyDto;
 import com.aaronjosh.real_estate_app.dto.property.PropertyResDto;
 import com.aaronjosh.real_estate_app.dto.property.UpdatePropertyDto;
@@ -48,10 +50,12 @@ public class PropertyService {
 
     // get all active properties
     @Transactional(readOnly = true)
-    public List<PropertyResDto> getProperties() {
-        List<PropertyEntity> properties = propertyRepo.findTop15ByStatus(PropertyStatus.ACTIVE);
+    public Map<String, Object> getProperties() {
+        List<PropertyCardDto> properties = propertyRepo.fetchPropertyCards();
 
-        return propertyMapper.toDto(properties);
+        return Map.of(
+                "success", true,
+                "properties", properties);
     }
 
     // gets the owner properties

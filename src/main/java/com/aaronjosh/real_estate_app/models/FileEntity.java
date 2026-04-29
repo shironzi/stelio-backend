@@ -2,6 +2,8 @@ package com.aaronjosh.real_estate_app.models;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -30,6 +32,9 @@ public class FileEntity {
     private String key;
     private LocalDateTime uploadedAt;
     private Boolean isPublic;
+
+    @Column(nullable = true)
+    private Boolean isPrimary;
 
     public FileEntity() {
     }

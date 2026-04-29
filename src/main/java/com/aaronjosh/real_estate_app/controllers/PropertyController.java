@@ -38,9 +38,7 @@ public class PropertyController {
 
     @GetMapping("/")
     public ResponseEntity<?> getProperties() {
-        List<PropertyResDto> properties = propertyService.getProperties();
-
-        return ResponseEntity.ok(Map.of("success", true, "properties", properties));
+        return ResponseEntity.ok(propertyService.getProperties());
     }
 
     @GetMapping("/my-properties")
