@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -82,23 +84,29 @@ public class PropertyEntity {
     private PropertyStatus status = PropertyStatus.ACTIVE;
 
     @OneToMany(mappedBy = "propertyEntity", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<FileEntity> images = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "host_id")
+    @JsonIgnore
     private UserEntity host;
 
     @OneToMany(mappedBy = "property", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<FavoriteEntity> favorites = new ArrayList<>();
 
     @OneToMany(mappedBy = "property", cascade = { CascadeType.PERSIST,
             CascadeType.REMOVE }, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<BookingEntity> bookings = new ArrayList<>();
 
     @OneToOne(mappedBy = "property", cascade = CascadeType.PERSIST, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
     private PropertyStats stats;
 
     @OneToMany(mappedBy = "property", fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<ReviewEntity> reviews = new ArrayList<>();
 
     public PropertyEntity() {

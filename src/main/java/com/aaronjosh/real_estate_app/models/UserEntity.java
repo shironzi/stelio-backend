@@ -20,6 +20,8 @@ import java.util.UUID;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -87,24 +89,31 @@ public class UserEntity {
     private FileEntity profilePicture;
 
     @OneToMany(mappedBy = "uploadedBy", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<FileEntity> uploads = new ArrayList<>();
 
     @OneToMany(mappedBy = "host", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<PropertyEntity> properties;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<FavoriteEntity> favorites = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<BookingEntity> bookings = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<ReviewEntity> reviews = new ArrayList<>();
 
     @OneToMany(mappedBy = "whoJoined", fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<ParticipantEntity> joinedConversations = new ArrayList<>();
 
     @OneToMany(mappedBy = "from", fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<MessageEntity> messages = new ArrayList<>();
 
     public UserEntity() {
