@@ -47,6 +47,7 @@ public interface PropertyRepository extends JpaRepository<PropertyEntity, UUID> 
                     p.id,
                     p.title,
                     p.address,
+                    p.price,
                     i.key
                 )
                 FROM PropertyEntity p
