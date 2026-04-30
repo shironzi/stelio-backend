@@ -6,6 +6,9 @@ import java.util.Objects;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,7 +25,6 @@ import com.aaronjosh.real_estate_app.models.PropertyStats;
 import com.aaronjosh.real_estate_app.models.PropertyEntity;
 import com.aaronjosh.real_estate_app.models.PropertyEntity.PropertyStatus;
 import com.aaronjosh.real_estate_app.repositories.PropertyRepository;
-import com.aaronjosh.real_estate_app.repositories.UserRepository;
 import com.aaronjosh.real_estate_app.util.PropertyMapper;
 import com.aaronjosh.real_estate_app.util.PropertyMapperWithSchedules;
 
@@ -37,9 +39,6 @@ public class PropertyService {
     private PropertyRepository propertyRepo;
 
     @Autowired
-    private UserRepository userRepo;
-
-    @Autowired
     private PropertyMapper propertyMapper;
 
     @Autowired
@@ -50,8 +49,10 @@ public class PropertyService {
 
     // get all active properties
     @Transactional(readOnly = true)
-    public Map<String, Object> getProperties() {
-        List<PropertyCardDto> properties = propertyRepo.fetchPropertyCards();
+    public Map<String, Object> getProperties(Integer page) {
+        Pageable pageable = PageRequest.of(page - 1, 10);
+
+        Page<PropertyCardDto> properties = propertyRepo.fetchPropertyCards(pageable);
 
         return Map.of(
                 "success", true,

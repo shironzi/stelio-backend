@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import com.aaronjosh.real_estate_app.dto.booking.PropertyBookingResDto;
 import com.aaronjosh.real_estate_app.dto.property.PropertyDto;
@@ -37,8 +38,8 @@ public class PropertyController {
     private BookingService bookingService;
 
     @GetMapping("/")
-    public ResponseEntity<?> getProperties() {
-        return ResponseEntity.ok(propertyService.getProperties());
+    public ResponseEntity<?> getProperties(@RequestParam(defaultValue = "1") Integer page) {
+        return ResponseEntity.ok(propertyService.getProperties(page));
     }
 
     @GetMapping("/my-properties")

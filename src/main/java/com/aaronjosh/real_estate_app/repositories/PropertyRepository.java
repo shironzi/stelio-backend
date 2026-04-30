@@ -4,8 +4,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.springframework.boot.autoconfigure.data.web.SpringDataWebProperties.Pageable;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -48,10 +48,11 @@ public interface PropertyRepository extends JpaRepository<PropertyEntity, UUID> 
                     p.title,
                     p.address,
                     p.price,
+                    p.propertyType,
                     i.key
                 )
                 FROM PropertyEntity p
                 LEFT JOIN p.images i ON i.isPrimary = true
             """)
-    List<PropertyCardDto> fetchPropertyCards();
+    Page<PropertyCardDto> fetchPropertyCards(Pageable pageable);
 }
