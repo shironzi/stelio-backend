@@ -11,15 +11,18 @@ import lombok.Data;
 public class PropertyCardDto {
     private UUID id;
     private String title;
+    private String city;
     private String address;
     private String imageUrl;
     private String propertyType;
     private BigDecimal price;
 
-    public PropertyCardDto(UUID id, String title, String address, BigDecimal price, PropertyType propertyType,
+    public PropertyCardDto(UUID id, String title, String city, String address, BigDecimal price,
+            PropertyType propertyType,
             String imageKey) {
         this.id = id;
         this.title = title;
+        this.city = city;
         this.address = address;
         this.price = price;
         this.imageUrl = imageKey;

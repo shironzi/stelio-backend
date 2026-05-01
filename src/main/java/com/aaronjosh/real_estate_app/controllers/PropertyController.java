@@ -1,5 +1,7 @@
 package com.aaronjosh.real_estate_app.controllers;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -26,6 +28,7 @@ import com.aaronjosh.real_estate_app.services.BookingService;
 import com.aaronjosh.real_estate_app.services.PropertyService;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 
 @Controller
 @RequestMapping("/api/properties")
@@ -38,8 +41,17 @@ public class PropertyController {
     private BookingService bookingService;
 
     @GetMapping("/")
-    public ResponseEntity<?> getProperties(@RequestParam(defaultValue = "1") Integer page) {
-        return ResponseEntity.ok(propertyService.getProperties(page));
+    public ResponseEntity<?> getProperties(
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(required = false) String address,
+            @RequestParam(required = false) LocalDateTime start,
+            @RequestParam(required = false) LocalDateTime end,
+            @RequestParam(required = false) Integer minGuests,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) BigDecimal minPrice) {
+
+        return ResponseEntity
+                .ok(propertyService.getProperties(page, address, start, end, minGuests, maxPrice, minPrice));
     }
 
     @GetMapping("/my-properties")

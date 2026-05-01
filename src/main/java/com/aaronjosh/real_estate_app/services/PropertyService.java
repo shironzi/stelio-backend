@@ -1,5 +1,7 @@
 package com.aaronjosh.real_estate_app.services;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -49,10 +51,36 @@ public class PropertyService {
 
     // get all active properties
     @Transactional(readOnly = true)
-    public Map<String, Object> getProperties(Integer page) {
+    public Map<String, Object> getProperties(
+            Integer page,
+            String address,
+            LocalDateTime start,
+            LocalDateTime end,
+            Integer minGuests,
+            BigDecimal maxPrice,
+            BigDecimal minPrice) {
+
         Pageable pageable = PageRequest.of(page - 1, 10);
 
-        Page<PropertyCardDto> properties = propertyRepo.fetchPropertyCards(pageable);
+        // Sanatize queries
+        if (address != null) {
+            address = "%" + address.toLowerCase() + "%";
+        }
+
+        if (minPrice != null && minPrice.compareTo(BigDecimal.ZERO) < 0) {
+            minPrice = BigDecimal.ZERO;
+        }
+
+        if (maxPrice != null && maxPrice.compareTo(BigDecimal.ZERO) < 0) {
+            maxPrice = BigDecimal.ZERO;
+        }
+
+        if (minGuests != null && minGuests < 1) {
+            minGuests = 1;
+        }
+
+        Page<PropertyCardDto> properties = propertyRepo.fetchPropertyCards(pageable, address, start, end, minGuests,
+                maxPrice, minPrice);
 
         return Map.of(
                 "success", true,

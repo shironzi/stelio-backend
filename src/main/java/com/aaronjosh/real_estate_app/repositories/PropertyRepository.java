@@ -1,5 +1,7 @@
 package com.aaronjosh.real_estate_app.repositories;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -43,16 +45,25 @@ public interface PropertyRepository extends JpaRepository<PropertyEntity, UUID> 
     Integer findTotalProperties();
 
     @Query("""
-                SELECT new com.aaronjosh.real_estate_app.dto.property.PropertyCardDto(
-                    p.id,
-                    p.title,
-                    p.address,
-                    p.price,
-                    p.propertyType,
-                    i.key
-                )
-                FROM PropertyEntity p
-                LEFT JOIN p.images i ON i.isPrimary = true
+            SELECT new com.aaronjosh.real_estate_app.dto.property.PropertyCardDto(
+            p.id, p.title, p.city, p.address, p.price, p.propertyType, i.key
+            )
+            FROM PropertyEntity p
+            LEFT JOIN p.images i ON i.isPrimary = true
+            WHERE (:address IS NULL OR (LOWER(p.address) LIKE :address OR LOWER(p.city) LIKE :address))
+            AND (:minGuests IS NULL OR p.maxGuest >= :minGuests)
+            AND (:minPrice IS NULL OR p.price >= :minPrice)
+            AND (:maxPrice IS NULL OR p.price <= :maxPrice)
+            AND (CAST(:start AS localdatetime) IS NULL OR CAST(:end AS localdatetime) IS NULL
+                OR NOT EXISTS (
+                    SELECT 1 FROM BookingEntity b
+                    WHERE b.property = p
+                    AND b.startDateTime < :end
+                    AND b.endDateTime > :start
+            ))
             """)
-    Page<PropertyCardDto> fetchPropertyCards(Pageable pageable);
+    Page<PropertyCardDto> fetchPropertyCards(Pageable pageable, @Param("address") String address,
+            @Param("start") LocalDateTime start, @Param("end") LocalDateTime end,
+            @Param("minGuests") Integer minGuests, @Param("maxPrice") BigDecimal maxPrice,
+            @Param("minPrice") BigDecimal minPrice);
 }
