@@ -28,7 +28,6 @@ import com.aaronjosh.real_estate_app.services.BookingService;
 import com.aaronjosh.real_estate_app.services.PropertyService;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Min;
 
 @Controller
 @RequestMapping("/api/properties")
