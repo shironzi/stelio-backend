@@ -7,9 +7,11 @@ import java.util.UUID;
 import com.aaronjosh.real_estate_app.models.PropertyEntity.PropertyStatus;
 import com.aaronjosh.real_estate_app.models.PropertyEntity.PropertyType;
 
+import lombok.Builder;
 import lombok.Data;
 
 @Data
+@Builder
 public class PropertyResDto {
     private UUID id;
     private String title;
@@ -21,9 +23,7 @@ public class PropertyResDto {
     private Integer totalBed;
     private Integer totalBath;
     private String address;
-    private String City;
+    private String city;
     private PropertyStatus status;
-    private List<ImageDto> images;
-    private Boolean isFavorite;
-    private List<DateRange> bookings;
+    private boolean isFavorite;
 }

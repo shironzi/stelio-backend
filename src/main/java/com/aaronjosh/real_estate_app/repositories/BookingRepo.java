@@ -14,8 +14,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import com.aaronjosh.real_estate_app.dto.booking.BookingWebhookResDto;
+import com.aaronjosh.real_estate_app.dto.property.BookingDateRange;
 import com.aaronjosh.real_estate_app.models.BookingEntity;
 import com.aaronjosh.real_estate_app.models.BookingEntity.BookingStatus;
+
+import jakarta.transaction.Transactional;
 
 @Repository
 public interface BookingRepo extends JpaRepository<BookingEntity, UUID> {
@@ -189,13 +193,21 @@ public interface BookingRepo extends JpaRepository<BookingEntity, UUID> {
                         """)
         List<Object[]> findActiveBookings(@Param("userId") UUID userId, @Param("dateTime") LocalDateTime dateTime);
 
-        @Modifying
-        @Query("UPDATE BookingEntity b SET b.status = :status WHERE b.status = 'CONFIRMED' AND b.startDateTime <= :now")
-        void updateBookingStatusBulkInprogress(@Param("status") BookingStatus status, @Param("now") LocalDateTime now);
+        @Modifying(clearAutomatically = true)
+        @Transactional
+        @Query("UPDATE BookingEntity b SET b.status = :status WHERE b.status = :currentStatus AND b.startDateTime <= :now")
+        void updateBookingStatusByStartDateTime(
+                        @Param("status") BookingStatus status,
+                        @Param("currentStatus") BookingStatus currentStatus,
+                        @Param("now") LocalDateTime now);
 
-        @Modifying
-        @Query("UPDATE BookingEntity b SET b.status = :status WHERE b.status = 'INPROGRESS' AND b.endDateTime > :now")
-        void updateBookingStatusBulkCompleted(@Param("status") BookingStatus status, @Param("now") LocalDateTime now);
+        @Modifying(clearAutomatically = true)
+        @Transactional
+        @Query("UPDATE BookingEntity b SET b.status = :status WHERE b.status = :currentStatus AND b.endDateTime <= :now")
+        void updateBookingStatusByEndDateTime(
+                        @Param("status") BookingStatus status,
+                        @Param("currentStatus") BookingStatus currentStatus,
+                        @Param("now") LocalDateTime now);
 
         @Query("""
                             SELECT b.id, u.id
@@ -207,11 +219,32 @@ public interface BookingRepo extends JpaRepository<BookingEntity, UUID> {
         List<Object[]> findBookingStatusAndInprogress(@Param("now") LocalDateTime now);
 
         @Query("""
-                            SELECT b.id, u.id
+                            SELECT b.id, u.id, b.status
                             FROM BookingEntity b
                             LEFT JOIN b.user u
-                            WHERE b.status = 'INPROGRESS'
+                            WHERE b.status = :status
                             AND b.endDateTime > :now
                         """)
-        List<Object[]> findBookingStatusAndCompleted(@Param("now") LocalDateTime now);
+        List<BookingWebhookResDto> findBookingByStatusAndEndDateTime(
+                        @Param("status") BookingStatus status,
+                        @Param("now") LocalDateTime now);
+
+        @Query("""
+                            SELECT b.id, u.id, b.status
+                            FROM BookingEntity b
+                            LEFT JOIN b.user u
+                            WHERE b.status = :status
+                            AND b.startDateTime > :now
+                        """)
+        List<BookingWebhookResDto> findBookingByStatusAndStartDateTime(
+                        @Param("status") BookingStatus status,
+                        @Param("now") LocalDateTime now);
+
+        @Query("""
+                        SELECT new com.aaronjosh.real_estate_app.dto.property.BookingDateRange( b.startDateTime, b.endDateTime)
+                        FROM BookingEntity b
+                        WHERE b.property.id = :propertyId AND b.endDateTime > :now AND b.status IN (:activeBookings)
+                        """)
+        List<BookingDateRange> fetchBookingDateRanceByPropertyId(@Param("propertyId") UUID propertyId,
+                        @Param("now") LocalDateTime now, @Param("activeBookings") List<BookingStatus> activeBookings);
 }

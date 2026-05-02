@@ -2,6 +2,7 @@ package com.aaronjosh.real_estate_app.services;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -17,6 +18,8 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
 
+import com.aaronjosh.real_estate_app.dto.property.BookingDateRange;
+import com.aaronjosh.real_estate_app.dto.property.PropertyImageDto;
 import com.aaronjosh.real_estate_app.dto.property.PropertyCardDto;
 import com.aaronjosh.real_estate_app.dto.property.PropertyDto;
 import com.aaronjosh.real_estate_app.dto.property.PropertyResDto;
@@ -24,11 +27,12 @@ import com.aaronjosh.real_estate_app.dto.property.UpdatePropertyDto;
 import com.aaronjosh.real_estate_app.dto.user.UserDetails;
 import com.aaronjosh.real_estate_app.models.FileEntity;
 import com.aaronjosh.real_estate_app.models.PropertyStats;
+import com.aaronjosh.real_estate_app.models.BookingEntity.BookingStatus;
 import com.aaronjosh.real_estate_app.models.PropertyEntity;
 import com.aaronjosh.real_estate_app.models.PropertyEntity.PropertyStatus;
+import com.aaronjosh.real_estate_app.repositories.BookingRepo;
+import com.aaronjosh.real_estate_app.repositories.FileRepository;
 import com.aaronjosh.real_estate_app.repositories.PropertyRepository;
-import com.aaronjosh.real_estate_app.util.PropertyMapper;
-import com.aaronjosh.real_estate_app.util.PropertyMapperWithSchedules;
 
 @Service
 @Transactional
@@ -41,10 +45,10 @@ public class PropertyService {
     private PropertyRepository propertyRepo;
 
     @Autowired
-    private PropertyMapper propertyMapper;
+    private FileRepository fileRepository;
 
     @Autowired
-    private PropertyMapperWithSchedules propertyMapperWithSchedules;
+    private BookingRepo bookingRepo;
 
     @Autowired
     private CloudflareR2Service cloudflareR2Service;
@@ -79,8 +83,16 @@ public class PropertyService {
             minGuests = 1;
         }
 
+        if (start == null) {
+            start = LocalDateTime.now();
+        }
+
+        List<BookingStatus> activeBookings = new ArrayList<>();
+        activeBookings.add(BookingStatus.CONFIRMED);
+        activeBookings.add(BookingStatus.INPROGRESS);
+
         Page<PropertyCardDto> properties = propertyRepo.fetchPropertyCards(pageable, address, start, end, minGuests,
-                maxPrice, minPrice);
+                maxPrice, minPrice, activeBookings);
 
         return Map.of(
                 "success", true,
@@ -89,20 +101,42 @@ public class PropertyService {
 
     // gets the owner properties
     @Transactional(readOnly = true)
-    public List<PropertyResDto> getMyPropeties() {
+    public Map<String, Object> getMyPropeties(Integer page) {
         UserDetails user = userService.getUserDetails();
-        List<PropertyEntity> properties = propertyRepo.findByHostId(user.getId());
 
-        return propertyMapper.toDto(properties);
+        Pageable pageable = PageRequest.of(page - 1, 10);
+
+        Page<PropertyCardDto> properties = propertyRepo.fetchPropertyCardsByOwner(pageable, user.getId());
+
+        return Map.of(
+                "success", true,
+                "properties", properties);
     }
 
     // get property by id
     @Transactional(readOnly = true)
-    public PropertyResDto getPropertyById(UUID propertyId) {
-        PropertyEntity property = propertyRepo.findById(Objects.requireNonNull(propertyId))
+    public Map<String, Object> getPropertyById(UUID propertyId) {
+
+        System.out.println(propertyId);
+        PropertyResDto property = propertyRepo.fetchPropertyById(propertyId)
                 .orElseThrow(() -> new RuntimeException("Property not found"));
 
-        return propertyMapperWithSchedules.toDto(property);
+        List<PropertyImageDto> images = fileRepository.fetchImagesByPropertyId(propertyId);
+
+        List<BookingStatus> activeBookings = new ArrayList<>();
+        activeBookings.add(BookingStatus.CONFIRMED);
+        activeBookings.add(BookingStatus.INPROGRESS);
+
+        List<BookingDateRange> bookings = bookingRepo.fetchBookingDateRanceByPropertyId(propertyId,
+                LocalDateTime.now(), activeBookings);
+
+        System.out.println(property);
+        return Map.of(
+                "success", true,
+                "property", property,
+                "images", images,
+                "bookings", bookings);
+
     }
 
     public PropertyEntity addProperty(PropertyDto propertyDto) {

@@ -9,6 +9,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import com.aaronjosh.real_estate_app.dto.booking.BookingWebhookResDto;
 import com.aaronjosh.real_estate_app.models.BookingEntity.BookingStatus;
 import com.aaronjosh.real_estate_app.repositories.BlacklistedTokensRepo;
 import com.aaronjosh.real_estate_app.repositories.BookingRepo;
@@ -17,7 +18,7 @@ import com.aaronjosh.real_estate_app.repositories.IdempotencyRepo;
 import jakarta.transaction.Transactional;
 
 @Component
-public class CleanupScheduler {
+public class Scheduler {
 
     @Autowired
     private BlacklistedTokensRepo blacklistedTokensRepo;
@@ -47,25 +48,35 @@ public class CleanupScheduler {
 
     @Transactional
     @Scheduled(cron = "0 0/10 * * * ?")
-    public void updateBookingStatusInprogress() {
-        for (Object[] obj : bookingRepo.findBookingStatusAndInprogress(LocalDateTime.now())) {
+    public void updateBookingStatusToInprogress() {
+        for (BookingWebhookResDto booking : bookingRepo.findBookingByStatusAndStartDateTime(BookingStatus.CONFIRMED,
+                LocalDateTime.now())) {
             Map<String, Object> update = new HashMap<>();
-            update.put("id", obj[0]);
-            update.put("status", BookingStatus.INPROGRESS.toString());
-            messagingTemplate.convertAndSendToUser(String.valueOf(obj[1]), "/my-bookings", update);
+            update.put("id", booking.getBookingId());
+            update.put("status", booking.getBookingStatus().toString());
+            messagingTemplate.convertAndSendToUser(booking.getUserId().toString(),
+                    "/my-bookings", update);
         }
-        bookingRepo.updateBookingStatusBulkInprogress(BookingStatus.INPROGRESS, LocalDateTime.now());
+        bookingRepo.updateBookingStatusByStartDateTime(
+                BookingStatus.INPROGRESS,
+                BookingStatus.CONFIRMED,
+                LocalDateTime.now());
     }
 
     @Transactional
     @Scheduled(cron = "0 0/10 * * * ?")
     public void updateBookingStatusCompleted() {
-        for (Object[] obj : bookingRepo.findBookingStatusAndCompleted(LocalDateTime.now())) {
+        for (BookingWebhookResDto booking : bookingRepo.findBookingByStatusAndEndDateTime(BookingStatus.INPROGRESS,
+                LocalDateTime.now())) {
             Map<String, Object> update = new HashMap<>();
-            update.put("id", obj[0]);
-            update.put("status", BookingStatus.COMPLETED.toString());
-            messagingTemplate.convertAndSendToUser(String.valueOf(obj[1]), "/my-bookings", update);
+            update.put("id", booking.getBookingId());
+            update.put("status", booking.getBookingStatus().toString());
+            messagingTemplate.convertAndSendToUser(booking.getUserId().toString(),
+                    "/my-bookings", update);
         }
-        bookingRepo.updateBookingStatusBulkCompleted(BookingStatus.INPROGRESS, LocalDateTime.now());
+        bookingRepo.updateBookingStatusByEndDateTime(
+                BookingStatus.COMPLETED,
+                BookingStatus.INPROGRESS,
+                LocalDateTime.now());
     }
 }
