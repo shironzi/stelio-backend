@@ -27,4 +27,5 @@ public class PropertyResDto {
     private PropertyStatus status;
     private boolean isFavorite;
     private List<ImageDto> images;
+    private List<BookingDateRange> bookings;
 }

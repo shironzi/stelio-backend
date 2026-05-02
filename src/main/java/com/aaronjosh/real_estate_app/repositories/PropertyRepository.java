@@ -99,11 +99,19 @@ public interface PropertyRepository extends JpaRepository<PropertyEntity, UUID> 
                                             i.key
                                         ) FROM FileEntity i
                                         WHERE i.propertyEntity = p
+                                    ),
+                                    (
+                                        SELECT new com.aaronjosh.real_estate_app.dto.property.BookingDateRange(
+                                                b.startDateTime, b.endDateTime
+                                        )
+                                        FROM BookingEntity b
+                                        WHERE b.property = p
                                     )
                             )
                             FROM PropertyEntity p
                             LEFT JOIN FavoriteEntity f ON f.property = p
                             LEFT JOIN FileEntity i ON i.propertyEntity = p
+                            LEFT JOIN BookingEntity b ON b.property = p
                             WHERE p.id = :propertyId
                         """)
         Optional<PropertyResDto> fetchPropertyById(@Param("propertyId") UUID propertyId);
