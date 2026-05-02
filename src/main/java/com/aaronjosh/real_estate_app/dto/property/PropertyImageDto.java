@@ -7,7 +7,7 @@ import lombok.Data;
 
 @Data
 @Builder
-public class ImageDto {
+public class PropertyImageDto {
     private UUID id;
-    private String key;
+    private String url;
 }

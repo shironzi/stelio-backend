@@ -24,7 +24,7 @@ import lombok.Data;
 @Entity
 @Data
 @Table(name = "bookings", indexes = {
-        @Index(name = "idx_property_booking_dates", columnList = "property_id, startDateTime, endDateTime")
+        @Index(name = "idx_property", columnList = "property_id")
 })
 
 public class BookingEntity {

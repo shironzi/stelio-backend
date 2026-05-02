@@ -26,6 +26,4 @@ public class PropertyResDto {
     private String city;
     private PropertyStatus status;
     private boolean isFavorite;
-    private List<ImageDto> images;
-    private List<BookingDateRange> bookings;
 }

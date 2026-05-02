@@ -2,6 +2,8 @@ package com.aaronjosh.real_estate_app.services;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -16,14 +18,20 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
 
+import com.aaronjosh.real_estate_app.dto.property.BookingDateRange;
+import com.aaronjosh.real_estate_app.dto.property.PropertyImageDto;
 import com.aaronjosh.real_estate_app.dto.property.PropertyCardDto;
 import com.aaronjosh.real_estate_app.dto.property.PropertyDto;
+import com.aaronjosh.real_estate_app.dto.property.PropertyResDto;
 import com.aaronjosh.real_estate_app.dto.property.UpdatePropertyDto;
 import com.aaronjosh.real_estate_app.dto.user.UserDetails;
 import com.aaronjosh.real_estate_app.models.FileEntity;
 import com.aaronjosh.real_estate_app.models.PropertyStats;
+import com.aaronjosh.real_estate_app.models.BookingEntity.BookingStatus;
 import com.aaronjosh.real_estate_app.models.PropertyEntity;
 import com.aaronjosh.real_estate_app.models.PropertyEntity.PropertyStatus;
+import com.aaronjosh.real_estate_app.repositories.BookingRepo;
+import com.aaronjosh.real_estate_app.repositories.FileRepository;
 import com.aaronjosh.real_estate_app.repositories.PropertyRepository;
 
 @Service
@@ -35,6 +43,12 @@ public class PropertyService {
 
     @Autowired
     private PropertyRepository propertyRepo;
+
+    @Autowired
+    private FileRepository fileRepository;
+
+    @Autowired
+    private BookingRepo bookingRepo;
 
     @Autowired
     private CloudflareR2Service cloudflareR2Service;
@@ -69,8 +83,16 @@ public class PropertyService {
             minGuests = 1;
         }
 
+        if (start == null) {
+            start = LocalDateTime.now();
+        }
+
+        List<BookingStatus> activeBookings = new ArrayList<>();
+        activeBookings.add(BookingStatus.CONFIRMED);
+        activeBookings.add(BookingStatus.INPROGRESS);
+
         Page<PropertyCardDto> properties = propertyRepo.fetchPropertyCards(pageable, address, start, end, minGuests,
-                maxPrice, minPrice);
+                maxPrice, minPrice, activeBookings);
 
         return Map.of(
                 "success", true,
@@ -94,12 +116,26 @@ public class PropertyService {
     // get property by id
     @Transactional(readOnly = true)
     public Map<String, Object> getPropertyById(UUID propertyId) {
-        PropertyEntity property = propertyRepo.findById(Objects.requireNonNull(propertyId))
+
+        System.out.println(propertyId);
+        PropertyResDto property = propertyRepo.fetchPropertyById(propertyId)
                 .orElseThrow(() -> new RuntimeException("Property not found"));
 
+        List<PropertyImageDto> images = fileRepository.fetchImagesByPropertyId(propertyId);
+
+        List<BookingStatus> activeBookings = new ArrayList<>();
+        activeBookings.add(BookingStatus.CONFIRMED);
+        activeBookings.add(BookingStatus.INPROGRESS);
+
+        List<BookingDateRange> bookings = bookingRepo.fetchBookingDateRanceByPropertyId(propertyId,
+                LocalDateTime.now(), activeBookings);
+
+        System.out.println(property);
         return Map.of(
                 "success", true,
-                "properties", property);
+                "property", property,
+                "images", images,
+                "bookings", bookings);
 
     }
 

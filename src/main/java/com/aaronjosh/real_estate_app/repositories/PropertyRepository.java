@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.antlr.v4.runtime.atn.SemanticContext.AND;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Repository;
 import com.aaronjosh.real_estate_app.dto.property.PropertyCardDto;
 import com.aaronjosh.real_estate_app.dto.property.PropertyResDto;
 import com.aaronjosh.real_estate_app.models.PropertyEntity;
+import com.aaronjosh.real_estate_app.models.BookingEntity.BookingStatus;
 import com.aaronjosh.real_estate_app.models.PropertyEntity.PropertyStatus;
 
 import jakarta.persistence.LockModeType;
@@ -55,18 +57,19 @@ public interface PropertyRepository extends JpaRepository<PropertyEntity, UUID> 
                         AND (:minGuests IS NULL OR p.maxGuest >= :minGuests)
                         AND (:minPrice IS NULL OR p.price >= :minPrice)
                         AND (:maxPrice IS NULL OR p.price <= :maxPrice)
-                        AND (CAST(:start AS localdatetime) IS NULL OR CAST(:end AS localdatetime) IS NULL
-                            OR NOT EXISTS (
+                        AND NOT EXISTS (
                                 SELECT 1 FROM BookingEntity b
                                 WHERE b.property = p
-                                AND b.startDateTime < :end
+                                AND b.status IN (:activeBookings)
                                 AND b.endDateTime > :start
-                        ))
+                                AND (CAST(:end AS localdatetime) IS NULL OR b.startDateTime < :end )
+                        )
                         """)
         Page<PropertyCardDto> fetchPropertyCards(Pageable pageable, @Param("address") String address,
                         @Param("start") LocalDateTime start, @Param("end") LocalDateTime end,
                         @Param("minGuests") Integer minGuests, @Param("maxPrice") BigDecimal maxPrice,
-                        @Param("minPrice") BigDecimal minPrice);
+                        @Param("minPrice") BigDecimal minPrice,
+                        @Param("activeBookings") List<BookingStatus> activeBookings);
 
         @Query("""
                         SELECT new com.aaronjosh.real_estate_app.dto.property.PropertyCardDto(
@@ -92,28 +95,12 @@ public interface PropertyRepository extends JpaRepository<PropertyEntity, UUID> 
                                     p.address,
                                     p.city,
                                     p.status,
-                                    CASE WHEN COUNT(f) > 0 THEN TRUE ELSE FALSE END,
-                                    (
-                                        SELECT new com.aaronjosh.real_estate_app.dto.property.ImageDto(
-                                            i.id,
-                                            i.key
-                                        ) FROM FileEntity i
-                                        WHERE i.propertyEntity = p
-                                    ),
-                                    (
-                                        SELECT new com.aaronjosh.real_estate_app.dto.property.BookingDateRange(
-                                                b.startDateTime, b.endDateTime
-                                        )
-                                        FROM BookingEntity b
-                                        WHERE b.property = p
-                                    )
+                                    CASE WHEN COUNT(f) > 0 THEN TRUE ELSE FALSE END
                             )
                             FROM PropertyEntity p
                             LEFT JOIN FavoriteEntity f ON f.property = p
-                            LEFT JOIN FileEntity i ON i.propertyEntity = p
-                            LEFT JOIN BookingEntity b ON b.property = p
                             WHERE p.id = :propertyId
+                            GROUP BY p.id
                         """)
         Optional<PropertyResDto> fetchPropertyById(@Param("propertyId") UUID propertyId);
-
 }

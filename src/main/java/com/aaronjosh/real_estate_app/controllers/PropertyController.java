@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +26,7 @@ import com.aaronjosh.real_estate_app.dto.property.PropertyDto;
 import com.aaronjosh.real_estate_app.dto.property.UpdatePropertyDto;
 import com.aaronjosh.real_estate_app.services.BookingService;
 import com.aaronjosh.real_estate_app.services.PropertyService;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 import jakarta.validation.Valid;
 
@@ -42,14 +44,14 @@ public class PropertyController {
     public ResponseEntity<?> getProperties(
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(required = false) String address,
-            @RequestParam(required = false) LocalDateTime start,
-            @RequestParam(required = false) LocalDateTime end,
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) @RequestParam(required = false) LocalDateTime checkIn,
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) @RequestParam(required = false) LocalDateTime checkOut,
             @RequestParam(required = false) Integer minGuests,
             @RequestParam(required = false) BigDecimal maxPrice,
             @RequestParam(required = false) BigDecimal minPrice) {
 
         return ResponseEntity
-                .ok(propertyService.getProperties(page, address, start, end, minGuests, maxPrice, minPrice));
+                .ok(propertyService.getProperties(page, address, checkIn, checkOut, minGuests, maxPrice, minPrice));
     }
 
     @GetMapping("/owner/properties")
