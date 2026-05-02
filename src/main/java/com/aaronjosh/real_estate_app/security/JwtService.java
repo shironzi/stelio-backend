@@ -20,7 +20,6 @@ import com.aaronjosh.real_estate_app.models.BlacklistedTokens;
 import com.aaronjosh.real_estate_app.models.UserEntity;
 import com.aaronjosh.real_estate_app.models.UserEntity.Role;
 import com.aaronjosh.real_estate_app.repositories.BlacklistedTokensRepo;
-import com.aaronjosh.real_estate_app.repositories.UserRepository;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -33,9 +32,6 @@ public class JwtService {
 
     @Autowired
     private BlacklistedTokensRepo blacklistedTokensRepo;
-
-    @Autowired
-    private UserRepository userRepo;
 
     private SecretKey getSigningKey() {
         byte[] keyBytes = jwtSecret.getBytes();
@@ -111,14 +107,8 @@ public class JwtService {
 
         boolean isBlacklisted = blacklistedTokensRepo.findByToken(token).isPresent();
         boolean isExpired = claims.getExpiration().before(new Date());
-        UUID userId = UUID.fromString(claims.getSubject());
-        String email = claims.get("email", String.class);
 
-        return userRepo.findById(userId)
-                .map(user -> !isExpired &&
-                        !isBlacklisted &&
-                        user.getEmail().equals(email))
-                .orElse(false);
+        return isBlacklisted || isExpired;
     }
 
     /*
