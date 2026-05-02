@@ -89,11 +89,16 @@ public class PropertyService {
 
     // gets the owner properties
     @Transactional(readOnly = true)
-    public List<PropertyResDto> getMyPropeties() {
+    public Map<String, Object> getMyPropeties(Integer page) {
         UserDetails user = userService.getUserDetails();
-        List<PropertyEntity> properties = propertyRepo.findByHostId(user.getId());
 
-        return propertyMapper.toDto(properties);
+        Pageable pageable = PageRequest.of(page - 1, 10);
+
+        Page<PropertyCardDto> properties = propertyRepo.fetchPropertyCardsByOwner(pageable, user.getId());
+
+        return Map.of(
+                "success", true,
+                "properties", properties);
     }
 
     // get property by id

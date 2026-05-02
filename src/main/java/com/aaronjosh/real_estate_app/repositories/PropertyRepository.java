@@ -24,46 +24,57 @@ import jakarta.persistence.LockModeType;
 
 @Repository
 public interface PropertyRepository extends JpaRepository<PropertyEntity, UUID> {
-    @EntityGraph(attributePaths = { "images" })
-    @NonNull
-    Optional<PropertyEntity> findById(@NonNull UUID id);
+        @EntityGraph(attributePaths = { "images" })
+        @NonNull
+        Optional<PropertyEntity> findById(@NonNull UUID id);
 
-    List<PropertyEntity> findByHostId(UUID userId);
+        List<PropertyEntity> findByHostId(UUID userId);
 
-    List<PropertyEntity> findByStatus(PropertyStatus status);
+        List<PropertyEntity> findByStatus(PropertyStatus status);
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT p FROM PropertyEntity p WHERE p.id = :id")
-    Optional<PropertyEntity> findAndLockById(@Param("id") UUID id);
+        @Lock(LockModeType.PESSIMISTIC_WRITE)
+        @Query("SELECT p FROM PropertyEntity p WHERE p.id = :id")
+        Optional<PropertyEntity> findAndLockById(@Param("id") UUID id);
 
-    @EntityGraph(attributePaths = { "images" })
-    List<PropertyEntity> findTop10ByStatus(PropertyStatus status);
+        @EntityGraph(attributePaths = { "images" })
+        List<PropertyEntity> findTop10ByStatus(PropertyStatus status);
 
-    @Query("""
-            SELECT COUNT(p) FROM PropertyEntity p
-            """)
-    Integer findTotalProperties();
+        @Query("""
+                        SELECT COUNT(p) FROM PropertyEntity p
+                        """)
+        Integer findTotalProperties();
 
-    @Query("""
-            SELECT new com.aaronjosh.real_estate_app.dto.property.PropertyCardDto(
-            p.id, p.title, p.city, p.address, p.price, p.propertyType, i.key
-            )
-            FROM PropertyEntity p
-            LEFT JOIN p.images i ON i.isPrimary = true
-            WHERE (:address IS NULL OR (LOWER(p.address) LIKE :address OR LOWER(p.city) LIKE :address))
-            AND (:minGuests IS NULL OR p.maxGuest >= :minGuests)
-            AND (:minPrice IS NULL OR p.price >= :minPrice)
-            AND (:maxPrice IS NULL OR p.price <= :maxPrice)
-            AND (CAST(:start AS localdatetime) IS NULL OR CAST(:end AS localdatetime) IS NULL
-                OR NOT EXISTS (
-                    SELECT 1 FROM BookingEntity b
-                    WHERE b.property = p
-                    AND b.startDateTime < :end
-                    AND b.endDateTime > :start
-            ))
-            """)
-    Page<PropertyCardDto> fetchPropertyCards(Pageable pageable, @Param("address") String address,
-            @Param("start") LocalDateTime start, @Param("end") LocalDateTime end,
-            @Param("minGuests") Integer minGuests, @Param("maxPrice") BigDecimal maxPrice,
-            @Param("minPrice") BigDecimal minPrice);
+        @Query("""
+                        SELECT new com.aaronjosh.real_estate_app.dto.property.PropertyCardDto(
+                        p.id, p.title, p.city, p.address, p.price, p.propertyType, i.key
+                        )
+                        FROM PropertyEntity p
+                        LEFT JOIN p.images i ON i.isPrimary = true
+                        WHERE (:address IS NULL OR (LOWER(p.address) LIKE :address OR LOWER(p.city) LIKE :address))
+                        AND (:minGuests IS NULL OR p.maxGuest >= :minGuests)
+                        AND (:minPrice IS NULL OR p.price >= :minPrice)
+                        AND (:maxPrice IS NULL OR p.price <= :maxPrice)
+                        AND (CAST(:start AS localdatetime) IS NULL OR CAST(:end AS localdatetime) IS NULL
+                            OR NOT EXISTS (
+                                SELECT 1 FROM BookingEntity b
+                                WHERE b.property = p
+                                AND b.startDateTime < :end
+                                AND b.endDateTime > :start
+                        ))
+                        """)
+        Page<PropertyCardDto> fetchPropertyCards(Pageable pageable, @Param("address") String address,
+                        @Param("start") LocalDateTime start, @Param("end") LocalDateTime end,
+                        @Param("minGuests") Integer minGuests, @Param("maxPrice") BigDecimal maxPrice,
+                        @Param("minPrice") BigDecimal minPrice);
+
+        @Query("""
+                        SELECT new com.aaronjosh.real_estate_app.dto.property.PropertyCardDto(
+                        p.id, p.title, p.city, p.address, p.price, p.propertyType, i.key
+                        )
+                        FROM PropertyEntity p
+                        LEFT JOIN p.images i ON i.isPrimary = true
+                        WHERE p.host.id = :userId
+                        """)
+        Page<PropertyCardDto> fetchPropertyCardsByOwner(Pageable pageable, @Param("userId") UUID userId);
+
 }

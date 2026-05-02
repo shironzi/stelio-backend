@@ -30,7 +30,7 @@ import com.aaronjosh.real_estate_app.services.PropertyService;
 import jakarta.validation.Valid;
 
 @Controller
-@RequestMapping("/api/properties")
+@RequestMapping("/api")
 public class PropertyController {
 
     @Autowired
@@ -39,7 +39,7 @@ public class PropertyController {
     @Autowired
     private BookingService bookingService;
 
-    @GetMapping("/")
+    @GetMapping("/properties/")
     public ResponseEntity<?> getProperties(
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(required = false) String address,
@@ -53,14 +53,12 @@ public class PropertyController {
                 .ok(propertyService.getProperties(page, address, start, end, minGuests, maxPrice, minPrice));
     }
 
-    @GetMapping("/my-properties")
-    public ResponseEntity<?> getMyproperties() {
-        List<PropertyResDto> properties = propertyService.getMyPropeties();
-
-        return ResponseEntity.ok(Map.of("success", true, "properties", properties));
+    @GetMapping("/owner/properties")
+    public ResponseEntity<?> getMyproperties(@RequestParam(defaultValue = "1") Integer page) {
+        return ResponseEntity.ok().body(propertyService.getMyPropeties(page));
     }
 
-    @GetMapping("/{propertyId}")
+    @GetMapping("/properties/{propertyId}")
     public ResponseEntity<?> getProperty(@Valid @PathVariable UUID propertyId) {
         PropertyResDto property = propertyService.getPropertyById(propertyId);
 
@@ -68,7 +66,7 @@ public class PropertyController {
     }
 
     @PreAuthorize("hasRole('OWNER')")
-    @GetMapping("/{propertyId}/bookings")
+    @GetMapping("/properties/{propertyId}/bookings")
     public ResponseEntity<?> getPropertyBookings(@Valid @PathVariable UUID propertyId) {
         List<PropertyBookingResDto> bookings = bookingService.getPropertyBookingsByPropertyId(propertyId);
 
@@ -76,7 +74,7 @@ public class PropertyController {
                 .ok(Map.of("success", true, "message", "successfully fetched the bookings", "bookings", bookings));
     }
 
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/properties", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('OWNER')")
     public ResponseEntity<?> addProperty(@ModelAttribute PropertyDto property) {
         propertyService.addProperty(property);
@@ -85,7 +83,7 @@ public class PropertyController {
                 .body(Map.of("success", true, "message", "Property created Successfully"));
     }
 
-    @PostMapping(value = "/{propertyId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/properties/{propertyId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('OWNER')")
     public ResponseEntity<?> editProperty(@PathVariable UUID propertyId,
             @ModelAttribute UpdatePropertyDto propertyDto) {
@@ -94,7 +92,7 @@ public class PropertyController {
         return ResponseEntity.ok(Map.of("success", true, "message", "Property Updated Successfully"));
     }
 
-    @DeleteMapping("/{propertyId}")
+    @DeleteMapping("/properties/{propertyId}")
     @PreAuthorize("hasRole('OWNER')")
     public ResponseEntity<?> deleteProperty(@PathVariable UUID propertyId) {
         propertyService.deleteProperty(propertyId);

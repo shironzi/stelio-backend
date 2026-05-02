@@ -108,7 +108,7 @@ public class JwtService {
         boolean isBlacklisted = blacklistedTokensRepo.findByToken(token).isPresent();
         boolean isExpired = claims.getExpiration().before(new Date());
 
-        return isBlacklisted || isExpired;
+        return !isBlacklisted || !isExpired;
     }
 
     /*
