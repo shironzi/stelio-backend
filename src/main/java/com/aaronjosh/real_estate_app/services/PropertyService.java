@@ -2,7 +2,6 @@ package com.aaronjosh.real_estate_app.services;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -19,7 +18,6 @@ import org.springframework.http.HttpStatus;
 
 import com.aaronjosh.real_estate_app.dto.property.PropertyCardDto;
 import com.aaronjosh.real_estate_app.dto.property.PropertyDto;
-import com.aaronjosh.real_estate_app.dto.property.PropertyResDto;
 import com.aaronjosh.real_estate_app.dto.property.UpdatePropertyDto;
 import com.aaronjosh.real_estate_app.dto.user.UserDetails;
 import com.aaronjosh.real_estate_app.models.FileEntity;
@@ -27,8 +25,6 @@ import com.aaronjosh.real_estate_app.models.PropertyStats;
 import com.aaronjosh.real_estate_app.models.PropertyEntity;
 import com.aaronjosh.real_estate_app.models.PropertyEntity.PropertyStatus;
 import com.aaronjosh.real_estate_app.repositories.PropertyRepository;
-import com.aaronjosh.real_estate_app.util.PropertyMapper;
-import com.aaronjosh.real_estate_app.util.PropertyMapperWithSchedules;
 
 @Service
 @Transactional
@@ -39,12 +35,6 @@ public class PropertyService {
 
     @Autowired
     private PropertyRepository propertyRepo;
-
-    @Autowired
-    private PropertyMapper propertyMapper;
-
-    @Autowired
-    private PropertyMapperWithSchedules propertyMapperWithSchedules;
 
     @Autowired
     private CloudflareR2Service cloudflareR2Service;
@@ -103,11 +93,14 @@ public class PropertyService {
 
     // get property by id
     @Transactional(readOnly = true)
-    public PropertyResDto getPropertyById(UUID propertyId) {
+    public Map<String, Object> getPropertyById(UUID propertyId) {
         PropertyEntity property = propertyRepo.findById(Objects.requireNonNull(propertyId))
                 .orElseThrow(() -> new RuntimeException("Property not found"));
 
-        return propertyMapperWithSchedules.toDto(property);
+        return Map.of(
+                "success", true,
+                "properties", property);
+
     }
 
     public PropertyEntity addProperty(PropertyDto propertyDto) {

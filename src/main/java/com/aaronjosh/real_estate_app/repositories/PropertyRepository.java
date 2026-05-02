@@ -17,6 +17,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 
 import com.aaronjosh.real_estate_app.dto.property.PropertyCardDto;
+import com.aaronjosh.real_estate_app.dto.property.PropertyResDto;
 import com.aaronjosh.real_estate_app.models.PropertyEntity;
 import com.aaronjosh.real_estate_app.models.PropertyEntity.PropertyStatus;
 
@@ -76,5 +77,35 @@ public interface PropertyRepository extends JpaRepository<PropertyEntity, UUID> 
                         WHERE p.host.id = :userId
                         """)
         Page<PropertyCardDto> fetchPropertyCardsByOwner(Pageable pageable, @Param("userId") UUID userId);
+
+        @Query("""
+                            SELECT new com.aaronjosh.real_estate_app.dto.property.PropertyResDto(
+                                    p.id,
+                                    p.title,
+                                    p.description,
+                                    p.price,
+                                    p.propertyType,
+                                    p.maxGuest,
+                                    p.totalBedroom,
+                                    p.totalBed,
+                                    p.totalBath,
+                                    p.address,
+                                    p.city,
+                                    p.status,
+                                    CASE WHEN COUNT(f) > 0 THEN TRUE ELSE FALSE END,
+                                    (
+                                        SELECT new com.aaronjosh.real_estate_app.dto.property.ImageDto(
+                                            i.id,
+                                            i.key
+                                        ) FROM FileEntity i
+                                        WHERE i.propertyEntity = p
+                                    )
+                            )
+                            FROM PropertyEntity p
+                            LEFT JOIN FavoriteEntity f ON f.property = p
+                            LEFT JOIN FileEntity i ON i.propertyEntity = p
+                            WHERE p.id = :propertyId
+                        """)
+        Optional<PropertyResDto> fetchPropertyById(@Param("propertyId") UUID propertyId);
 
 }
