@@ -1,4 +1,4 @@
-package com.aaronjosh.real_estate_app.services.listeners;
+package com.aaronjosh.real_estate_app.listeners;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

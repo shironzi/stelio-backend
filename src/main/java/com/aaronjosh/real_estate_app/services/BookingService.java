@@ -19,6 +19,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.aaronjosh.real_estate_app.dto.booking.PropertyBookingResDto;
 import com.aaronjosh.real_estate_app.dto.user.UserDetails;
+import com.aaronjosh.real_estate_app.listeners.BookingMessageListener;
 import com.aaronjosh.real_estate_app.dto.booking.BookingReqDto;
 import com.aaronjosh.real_estate_app.dto.booking.BookingResDto;
 import com.aaronjosh.real_estate_app.models.BookingEntity;
@@ -29,7 +30,6 @@ import com.aaronjosh.real_estate_app.models.BookingEntity.BookingStatus;
 import com.aaronjosh.real_estate_app.repositories.BookingRepo;
 import com.aaronjosh.real_estate_app.repositories.PropertyRepository;
 import com.aaronjosh.real_estate_app.repositories.UserRepository;
-import com.aaronjosh.real_estate_app.services.listeners.BookingMessageListener;
 
 import jakarta.transaction.Transactional;
 
