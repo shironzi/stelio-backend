@@ -16,10 +16,11 @@ public class PropertyCardDto {
     private String imageUrl;
     private String propertyType;
     private BigDecimal price;
+    private Boolean isFavorite;
 
     public PropertyCardDto(UUID id, String title, String city, String address, BigDecimal price,
             PropertyType propertyType,
-            String imageKey) {
+            String imageKey, Boolean isFavorite) {
         this.id = id;
         this.title = title;
         this.city = city;
@@ -27,5 +28,6 @@ public class PropertyCardDto {
         this.price = price;
         this.imageUrl = imageKey;
         this.propertyType = propertyType.toString();
+        this.isFavorite = isFavorite;
     }
 }

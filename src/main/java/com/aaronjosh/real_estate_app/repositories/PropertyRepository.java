@@ -48,10 +48,12 @@ public interface PropertyRepository extends JpaRepository<PropertyEntity, UUID> 
 
         @Query("""
                         SELECT new com.aaronjosh.real_estate_app.dto.property.PropertyCardDto(
-                        p.id, p.title, p.city, p.address, p.price, p.propertyType, i.key
+                                p.id, p.title, p.city, p.address, p.price, p.propertyType, i.key,
+                                CASE WHEN COUNT(f) > 0 THEN TRUE ELSE FALSE END
                         )
                         FROM PropertyEntity p
                         LEFT JOIN p.images i ON i.isPrimary = true
+                        LEFT JOIN FavoriteEntity f ON f.property = p
                         WHERE (:address IS NULL OR (LOWER(p.address) LIKE :address OR LOWER(p.city) LIKE :address))
                         AND (:minGuests IS NULL OR p.maxGuest >= :minGuests)
                         AND (:minPrice IS NULL OR p.price >= :minPrice)
@@ -63,6 +65,7 @@ public interface PropertyRepository extends JpaRepository<PropertyEntity, UUID> 
                                 AND b.endDateTime > :start
                                 AND (CAST(:end AS localdatetime) IS NULL OR b.startDateTime < :end )
                         )
+                        GROUP BY p.id, p.title, p.city, p.address, p.price, p.propertyType, i.key
                         """)
         Page<PropertyCardDto> fetchPropertyCards(Pageable pageable, @Param("address") String address,
                         @Param("start") LocalDateTime start, @Param("end") LocalDateTime end,
@@ -72,7 +75,7 @@ public interface PropertyRepository extends JpaRepository<PropertyEntity, UUID> 
 
         @Query("""
                         SELECT new com.aaronjosh.real_estate_app.dto.property.PropertyCardDto(
-                        p.id, p.title, p.city, p.address, p.price, p.propertyType, i.key
+                        p.id, p.title, p.city, p.address, p.price, p.propertyType, i.key, FALSE
                         )
                         FROM PropertyEntity p
                         LEFT JOIN p.images i ON i.isPrimary = true
