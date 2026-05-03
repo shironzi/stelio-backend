@@ -105,10 +105,10 @@ public class JwtService {
     public boolean isAccessTokenValid(String token) {
         Claims claims = extractAllClaims(token);
 
-        boolean isBlacklisted = blacklistedTokensRepo.findByToken(token).isPresent();
         boolean isExpired = claims.getExpiration().before(new Date());
+        boolean isBlacklisted = blacklistedTokensRepo.findByToken(token).isPresent();
 
-        return !isBlacklisted || !isExpired;
+        return isBlacklisted || isExpired;
     }
 
     /*

@@ -61,7 +61,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             final String jwt = authHeader.substring(7);
 
-            if (!jwtService.isAccessTokenValid(jwt)) {
+            if (jwtService.isAccessTokenValid(jwt)) {
                 res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 res.getWriter().write("Invalid or Expired token.");
                 return;
