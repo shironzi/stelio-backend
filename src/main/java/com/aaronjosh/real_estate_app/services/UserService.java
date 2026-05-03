@@ -36,19 +36,12 @@ public class UserService {
         UserDetails userDetails = getUserDetails();
 
         return userRepository.findById(userDetails.getId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "User not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
     }
 
     // Updating role into owner
     public LoginResDto becomeHost() {
-        UserDetails userDetails = getUserDetails();
-
-        if (userDetails == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User is not authenticated");
-        }
-
-        UserEntity user = userRepository.findById(userDetails.getId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        UserEntity user = getUser();
 
         user.setRole(Role.OWNER);
         userRepository.save(user);

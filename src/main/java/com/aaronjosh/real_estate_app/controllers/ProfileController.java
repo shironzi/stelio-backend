@@ -16,7 +16,7 @@ import com.aaronjosh.real_estate_app.dto.user.UserProfileDetailsDto;
 import com.aaronjosh.real_estate_app.services.ProfileService;
 
 @Controller
-@RequestMapping()
+@RequestMapping("/api")
 public class ProfileController {
     @Autowired
     private ProfileService profileService;
