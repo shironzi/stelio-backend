@@ -26,7 +26,6 @@ import com.aaronjosh.real_estate_app.dto.property.PropertyDto;
 import com.aaronjosh.real_estate_app.dto.property.UpdatePropertyDto;
 import com.aaronjosh.real_estate_app.services.BookingService;
 import com.aaronjosh.real_estate_app.services.PropertyService;
-import com.fasterxml.jackson.annotation.JsonFormat;
 
 import jakarta.validation.Valid;
 

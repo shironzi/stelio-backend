@@ -2,39 +2,30 @@ package com.aaronjosh.real_estate_app.dto.booking;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
+
+import com.aaronjosh.real_estate_app.models.BookingEntity.BookingStatus;
 
 import lombok.Builder;
 import lombok.Data;
 
 @Data
 @Builder
-public class BookingResDto {
+public class BookingCardsResDto {
 
     // Booking fields
     private UUID id;
-    private String paymentStatus;
+    private BookingStatus status;
     private LocalDateTime start;
     private LocalDateTime end;
-    private String specialRequest;
-    private List<String> guestNames;
     private Integer totalGuests;
-    private String contactPhone;
-    private String status;
 
     // Property fields
     private UUID propertyId;
     private String title;
-    private String description;
     private BigDecimal price;
-    private String propertyType;
-    private Integer maxGuest;
     private Integer totalBedroom;
-    private Integer totalBed;
-    private Integer totalBath;
     private String address;
     private String city;
-    private List<String> images;
-    private LocalDateTime expiresAt;
+    private String imageUrl;
 }

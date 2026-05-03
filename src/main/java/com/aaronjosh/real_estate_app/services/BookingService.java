@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import java.util.Objects;
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -12,7 +11,6 @@ import java.time.temporal.ChronoUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -20,8 +18,8 @@ import org.springframework.web.server.ResponseStatusException;
 import com.aaronjosh.real_estate_app.dto.booking.PropertyBookingResDto;
 import com.aaronjosh.real_estate_app.dto.user.UserDetails;
 import com.aaronjosh.real_estate_app.listeners.BookingMessageListener;
+import com.aaronjosh.real_estate_app.dto.booking.BookingCardsResDto;
 import com.aaronjosh.real_estate_app.dto.booking.BookingReqDto;
-import com.aaronjosh.real_estate_app.dto.booking.BookingResDto;
 import com.aaronjosh.real_estate_app.models.BookingEntity;
 import com.aaronjosh.real_estate_app.models.PropertyEntity;
 import com.aaronjosh.real_estate_app.models.UserEntity;
@@ -55,121 +53,10 @@ public class BookingService {
     private String publicUrl;
 
     // returns bookings from a user.
-    public List<BookingResDto> getBookings() {
+    public List<BookingCardsResDto> getBookings() {
         UserDetails user = userService.getUserDetails();
 
-        List<BookingResDto> bookings = bookingRepo.findByUser_id(user.getId(), Sort.by("createdAt").descending())
-                .stream().map(
-                        (booking) -> {
-                            BookingResDto dto = new BookingResDto();
-
-                            // Booking fields
-                            dto.setId(booking.getId());
-                            dto.setPaymentStatus(booking.getPaymentStatus().toString());
-                            dto.setStart(booking.getStartDateTime());
-                            dto.setEnd(booking.getEndDateTime());
-                            dto.setGuestNames(booking.getGuestNames());
-                            dto.setTotalGuests(booking.getTotalGuests());
-                            dto.setContactPhone(booking.getContactPhone());
-                            dto.setStatus(booking.getStatus().toString());
-
-                            dto.setPrice(BigDecimal.valueOf(0));
-                            if (booking.getPrice() != null) {
-                                dto.setPrice(BigDecimal.valueOf(booking.getPrice()));
-                            }
-
-                            // Property fields
-                            dto.setPropertyId(booking.getProperty().getId());
-                            dto.setTitle(booking.getProperty().getTitle());
-                            dto.setDescription(booking.getProperty().getDescription());
-                            dto.setPropertyType(booking.getProperty().getPropertyType().toString());
-                            dto.setMaxGuest(booking.getProperty().getMaxGuest());
-                            dto.setTotalBedroom(booking.getProperty().getTotalBedroom());
-                            dto.setTotalBed(booking.getProperty().getTotalBed());
-                            dto.setTotalBath(booking.getProperty().getTotalBath());
-                            dto.setAddress(booking.getProperty().getAddress());
-                            dto.setCity(booking.getProperty().getCity());
-                            dto.setExpiresAt(booking.getExpiresAt());
-
-                            dto.setImages(booking.getProperty().getImages().stream()
-                                    .map(image -> publicUrl + "/" + image.getKey())
-                                    .collect(Collectors.toList()));
-                            return dto;
-                        })
-                .toList();
-
-        return bookings;
-    }
-
-    public List<BookingResDto> getPropertyBookings() {
-        UserDetails user = userService.getUserDetails();
-
-        return bookingRepo.findByProperty_Host_Id(user.getId()).stream().map(
-                (booking) -> {
-                    BookingResDto dto = new BookingResDto();
-
-                    // Booking fields
-                    dto.setId(booking.getId());
-                    dto.setPaymentStatus(booking.getPaymentStatus().toString());
-                    dto.setStart(booking.getStartDateTime());
-                    dto.setEnd(booking.getEndDateTime());
-                    dto.setGuestNames(booking.getGuestNames());
-                    dto.setTotalGuests(booking.getTotalGuests());
-                    dto.setContactPhone(booking.getContactPhone());
-                    dto.setStatus(booking.getStatus().toString());
-
-                    // Property fields
-                    dto.setPropertyId(booking.getProperty().getId());
-                    dto.setTitle(booking.getProperty().getTitle());
-                    dto.setDescription(booking.getProperty().getDescription());
-                    dto.setPrice(booking.getProperty().getPrice());
-                    dto.setPropertyType(booking.getProperty().getPropertyType().toString());
-                    dto.setMaxGuest(booking.getProperty().getMaxGuest());
-                    dto.setTotalBedroom(booking.getProperty().getTotalBedroom());
-                    dto.setTotalBed(booking.getProperty().getTotalBed());
-                    dto.setTotalBath(booking.getProperty().getTotalBath());
-                    dto.setAddress(booking.getProperty().getAddress());
-                    dto.setCity(booking.getProperty().getCity());
-
-                    dto.setImages(booking.getProperty().getImages().stream()
-                            .map(image -> publicUrl + "/" + image.getKey())
-                            .collect(Collectors.toList()));
-
-                    return dto;
-                }).toList();
-    }
-
-    // returns booking info by ID.
-    public BookingResDto getBookingById(UUID bookingId) {
-        BookingEntity booking = bookingRepo.findById(bookingId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Booking not found"));
-
-        BookingResDto dto = new BookingResDto();
-
-        // Booking fields
-        dto.setId(booking.getId());
-        dto.setPaymentStatus(booking.getPaymentStatus().toString());
-        dto.setStart(booking.getStartDateTime());
-        dto.setEnd(booking.getEndDateTime());
-        dto.setGuestNames(booking.getGuestNames());
-        dto.setTotalGuests(booking.getTotalGuests());
-        dto.setContactPhone(booking.getContactPhone());
-        dto.setStatus(booking.getStatus().toString());
-
-        // Property fields
-        dto.setPropertyId(booking.getProperty().getId());
-        dto.setTitle(booking.getProperty().getTitle());
-        dto.setDescription(booking.getProperty().getDescription());
-        dto.setPrice(booking.getProperty().getPrice());
-        dto.setPropertyType(booking.getProperty().getPropertyType().toString());
-        dto.setMaxGuest(booking.getProperty().getMaxGuest());
-        dto.setTotalBedroom(booking.getProperty().getTotalBedroom());
-        dto.setTotalBed(booking.getProperty().getTotalBed());
-        dto.setTotalBath(booking.getProperty().getTotalBath());
-        dto.setAddress(booking.getProperty().getAddress());
-        dto.setCity(booking.getProperty().getCity());
-
-        return dto;
+        return bookingRepo.findBookingsByUserId(user.getId(), BookingStatus.CONFIRMED);
     }
 
     // Requesting for booking a property with a Pending for approval
