@@ -258,15 +258,16 @@ public interface BookingRepo extends JpaRepository<BookingEntity, UUID> {
                 p.totalBedroom,
                 p.address,
                 p.city,
-                i.key
+                i.key,
+                b.contactPhone
             )
             FROM BookingEntity b
             LEFT JOIN b.property p
             LEFT JOIN p.images i ON i.isPrimary = true
             WHERE b.user.id = :userId
             ORDER BY
-            CASE WHEN b.status = :status THEN 1 ELSE 0 END,
-            b.startDateTime ASC
+            CASE WHEN b.status = :status THEN 0 ELSE 1 END,
+            b.startDateTime DESC
             """)
     List<BookingCardsResDto> findBookingsByUserId(@Param("userId") UUID userId, @Param("status") BookingStatus status);
 }

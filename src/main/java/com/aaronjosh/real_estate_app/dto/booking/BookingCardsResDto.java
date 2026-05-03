@@ -28,4 +28,7 @@ public class BookingCardsResDto {
     private String address;
     private String city;
     private String imageUrl;
+
+    // User Info
+    private String contactPhone;
 }
