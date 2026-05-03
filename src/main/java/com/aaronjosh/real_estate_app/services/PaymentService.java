@@ -5,7 +5,6 @@ import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,7 +13,6 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.aaronjosh.real_estate_app.dto.booking.BookingResDto;
 import com.aaronjosh.real_estate_app.models.BookingEntity;
 import com.aaronjosh.real_estate_app.models.BookingEntity.BookingStatus;
 import com.aaronjosh.real_estate_app.models.BookingEntity.PaymentStatus;
@@ -115,37 +113,9 @@ public class PaymentService {
 
             bookingRepo.save(booking);
 
-            BookingResDto dto = new BookingResDto();
-
-            dto.setId(booking.getId());
-            dto.setPaymentStatus(booking.getPaymentStatus().toString());
-            dto.setStart(booking.getStartDateTime());
-            dto.setEnd(booking.getEndDateTime());
-            dto.setGuestNames(booking.getGuestNames());
-            dto.setTotalGuests(booking.getTotalGuests());
-            dto.setContactPhone(booking.getContactPhone());
-            dto.setStatus(booking.getStatus().toString());
-
-            // Property fields
-            dto.setPropertyId(booking.getProperty().getId());
-            dto.setTitle(booking.getProperty().getTitle());
-            dto.setDescription(booking.getProperty().getDescription());
-            dto.setPrice(booking.getProperty().getPrice());
-            dto.setPropertyType(booking.getProperty().getPropertyType().toString());
-            dto.setMaxGuest(booking.getProperty().getMaxGuest());
-            dto.setTotalBedroom(booking.getProperty().getTotalBedroom());
-            dto.setTotalBed(booking.getProperty().getTotalBed());
-            dto.setTotalBath(booking.getProperty().getTotalBath());
-            dto.setAddress(booking.getProperty().getAddress());
-            dto.setCity(booking.getProperty().getCity());
-
-            dto.setImages(booking.getProperty().getImages().stream()
-                    .map(image -> publicUrl + "/" + image.getKey())
-                    .collect(Collectors.toList()));
-
             Map<String, String> update = new HashMap<>();
-            update.put("id", dto.getId().toString());
-            update.put("status", dto.getStatus().toString());
+            update.put("id", booking.getId().toString());
+            update.put("status", booking.getStatus().toString());
 
             messagingTemplate.convertAndSendToUser(booking.getUser().getId().toString(), "/my-bookings", update);
         } catch (SignatureVerificationException e) {
